@@ -73,7 +73,7 @@ interface StoreContextType {
   sendOtp: (email: string, phone?: string, name?: string) => Promise<void>;
   verifyOtp: (email: string, otp: string, phone?: string, name?: string) => Promise<{ isNewUser: boolean; isProfileComplete: boolean; user: User }>;
   resendOtp: (email: string, phone?: string, name?: string) => Promise<void>;
-  googleLogin: (payload: { credential?: string; email?: string; name?: string; avatar?: string }) => Promise<{ isNewUser: boolean; isProfileComplete: boolean; user: User }>;
+  googleLogin: (payload: { credential: string }) => Promise<{ isNewUser: boolean; isProfileComplete: boolean; user: User }>;
   loginUser: (email: string, password?: string) => Promise<User | undefined>;
   registerUser: (name: string, email: string, password?: string) => Promise<User | undefined>;
   logoutUser: () => void;
@@ -282,7 +282,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const googleLogin = async (payload: { credential?: string; email?: string; name?: string; avatar?: string }) => {
+  const googleLogin = async (payload: { credential: string }) => {
     try {
       const res = await apiService.googleAuth(payload);
       if (res && res.user) {

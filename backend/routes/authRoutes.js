@@ -330,53 +330,53 @@ router.get('/users', async (req, res) => {
 // @access  Public
 router.post('/google', async (req, res) => {
   try {
-    const { credential, email, name, avatar, googleId } = req.body;
+    const { credential } = req.body;
 
-    let userEmail = email;
-    let userName = name;
-    let userAvatar = avatar;
-
-    // Optional: Verify Google ID token if provided
-    if (credential && process.env.GOOGLE_CLIENT_ID) {
-      try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken: credential,
-          audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        const payload = ticket.getPayload();
-        if (payload) {
-          userEmail = payload.email;
-          userName = payload.name;
-          userAvatar = payload.picture;
-        }
-      } catch (verifyErr) {
-        console.warn('⚠️ Google token verify warning:', verifyErr.message);
-      }
-    }
-
-    if (!userEmail) {
-      return res.status(400).json({
-        message: 'Google authentication payload missing email address',
+    if (!credential) {
+      return res.status(401).json({
+        message: 'Google authentication failed. Unable to verify Google account.',
       });
     }
 
-    const cleanEmail = userEmail.toLowerCase().trim();
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      payload = ticket.getPayload();
+    } catch (verifyErr) {
+      console.error('❌ Google token verification error:', verifyErr.message);
+      return res.status(401).json({
+        message: 'Google authentication failed. Unable to verify Google account.',
+      });
+    }
+
+    if (!payload || !payload.email) {
+      return res.status(401).json({
+        message: 'Google authentication failed. Unable to verify Google account.',
+      });
+    }
+
+    const cleanEmail = payload.email.toLowerCase().trim();
+    const userName = payload.name || '';
+
     let user = await User.findOne({ email: cleanEmail });
     let isNewUser = false;
 
     if (!user) {
       isNewUser = true;
       user = await User.create({
-        name: userName || '',
+        name: userName,
         email: cleanEmail,
+        phone: '',
         authProvider: 'google',
         isEmailVerified: true,
-        phone: '',
         role: 'customer',
       });
     } else {
       user.isEmailVerified = true;
-      if (!user.name && userName) {
+      if (userName && (!user.name || user.name.trim() === '')) {
         user.name = userName;
       }
       await user.save();
@@ -398,7 +398,7 @@ router.post('/google', async (req, res) => {
         authProvider: user.authProvider,
         isEmailVerified: user.isEmailVerified,
         role: user.role,
-        savedAddresses: user.savedAddresses,
+        savedAddresses: user.savedAddresses || [],
         createdAt: user.createdAt,
       },
     });

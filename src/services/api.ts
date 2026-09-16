@@ -166,7 +166,7 @@ export const apiService = {
     return mapIdArray(data);
   },
 
-  async googleAuth(payload: { credential?: string; email?: string; name?: string; avatar?: string; googleId?: string }): Promise<{ token: string; isNewUser: boolean; isProfileComplete: boolean; user: User }> {
+  async googleAuth(payload: { credential: string }): Promise<{ token: string; isNewUser: boolean; isProfileComplete: boolean; user: User }> {
     const res = await fetchJSON<{ token: string; isNewUser: boolean; isProfileComplete: boolean; user: User }>('/auth/google', {
       method: 'POST',
       body: JSON.stringify(payload),

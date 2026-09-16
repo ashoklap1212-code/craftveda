@@ -49,7 +49,79 @@ export const AuthModal: React.FC = () => {
     };
   }, [resendCooldown]);
 
-  if (!isAuthModalOpen) return null;
+  // Google Identity Services (GIS) Integration
+  useEffect(() => {
+    if (!isAuthModalOpen || step !== 'email') return;
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '434211721817-t5kqernt93mn4h821pqnqet1hcp6cmi0.apps.googleusercontent.com';
+
+    const handleCredentialResponse = async (response: any) => {
+      if (!response || !response.credential) {
+        setErrorMsg('Failed to obtain Google account credentials.');
+        return;
+      }
+      setErrorMsg('');
+      setSuccessMsg('');
+      try {
+        setLoading(true);
+        const res = await googleLogin({
+          credential: response.credential,
+        });
+
+        if (res && res.user) {
+          if (!res.isProfileComplete || res.isNewUser) {
+            setName(res.user.name || '');
+            setEmail(res.user.email);
+            setStep('personal_details');
+          } else {
+            handleClose();
+          }
+        }
+      } catch (err: any) {
+        setErrorMsg(err.message || 'Google Sign-In failed. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const initGsi = () => {
+      const google = (window as any).google;
+      if (google?.accounts?.id) {
+        try {
+          google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleCredentialResponse,
+            auto_select: false,
+          });
+
+          const btnContainer = document.getElementById('googleSignInBtnContainer');
+          if (btnContainer) {
+            btnContainer.innerHTML = '';
+            google.accounts.id.renderButton(btnContainer, {
+              theme: 'outline',
+              size: 'large',
+              width: 360,
+              text: 'continue_with',
+              shape: 'pill',
+            });
+          }
+        } catch (e) {
+          console.warn('GIS Init Error:', e);
+        }
+      }
+    };
+
+    if ((window as any).google?.accounts?.id) {
+      initGsi();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => initGsi();
+      document.head.appendChild(script);
+    }
+  }, [isAuthModalOpen, step]);
 
   const resetForm = () => {
     setStep('email');
@@ -199,32 +271,19 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  // HANDLER GOOGLE SIGN-IN
-  const handleGoogleAuth = async () => {
+  // HANDLER GOOGLE SIGN-IN MANUAL TRIGGER
+  const handleGoogleAuth = () => {
     setErrorMsg('');
     setSuccessMsg('');
-
-    try {
-      setLoading(true);
-      const demoEmail = `google.user.${Math.floor(1000 + Math.random() * 9000)}@gmail.com`;
-      const res = await googleLogin({
-        email: demoEmail,
-        name: 'Craft Patron',
-      });
-
-      if (res && res.user) {
-        if (!res.isProfileComplete || res.isNewUser) {
-          setName(res.user.name || '');
-          setEmail(res.user.email);
-          setStep('personal_details');
-        } else {
-          handleClose();
+    const google = (window as any).google;
+    if (google?.accounts?.id) {
+      google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.warn('Google OneTap prompt notice:', notification.getNotDisplayedReason());
         }
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Google Sign-In failed. Please try again.');
-    } finally {
-      setLoading(false);
+      });
+    } else {
+      setErrorMsg('Google Sign-In service is loading. Please try again.');
     }
   };
 
@@ -278,6 +337,8 @@ export const AuthModal: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (!isAuthModalOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-950/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
@@ -449,12 +510,13 @@ export const AuthModal: React.FC = () => {
                 <div className="flex-grow border-t border-earth-200"></div>
               </div>
 
-              {/* Continue with Google Button */}
+              {/* Continue with Google Button Container */}
+              <div id="googleSignInBtnContainer" className="w-full flex justify-center min-h-[44px]"></div>
               <button
                 type="button"
                 onClick={handleGoogleAuth}
                 disabled={loading}
-                className="w-full bg-white border border-earth-200 hover:border-earth-300 text-earth-800 font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2.5 transition-all shadow-sm hover:shadow-warm"
+                className="w-full bg-white border border-earth-200 hover:border-earth-300 text-earth-800 font-bold py-3 rounded-2xl text-xs flex items-center justify-center gap-2.5 transition-all shadow-sm hover:shadow-warm mt-1"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
