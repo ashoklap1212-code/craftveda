@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream font-sans text-earth-800 antialiased selection:bg-terracotta-100 selection:text-terracotta-800;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-earth-900 tracking-tight;
+  }
+}
+
+/* Custom Luxury Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F0E8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C85A32;
+  border-radius: 9999px;
+  border: 2px solid #F5F0E8;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B84A22;
+}
+
+/* Custom UI Utilities & Glassmorphism */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(220, 115, 81, 0.15);
+}
+
+.glass-card-dark {
+  background: rgba(42, 26, 22, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(200, 90, 50, 0.25);
+}
+
+.glass-nav {
+  background: rgba(253, 251, 247, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(220, 115, 81, 0.12);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #D4AF37 0%, #C85A32 50%, #963919 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-terracotta {
+  background: linear-gradient(135deg, #DC7351 0%, #C85A32 50%, #7B2E15 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glow-terracotta {
+  box-shadow: 0 0 25px -5px rgba(200, 90, 50, 0.35);
+}
+
+.glow-gold {
+  box-shadow: 0 0 25px -5px rgba(212, 175, 55, 0.35);
+}
+
+.bg-terracotta-gradient {
+  background: linear-gradient(135deg, #C85A32 0%, #963919 100%);
+}
+
+.bg-earth-gradient {
+  background: linear-gradient(135deg, #2A1A16 0%, #382621 100%);
+}
+
+.bg-cream-gradient {
+  background: linear-gradient(180deg, #FDFBF7 0%, #F5F0E8 100%);
+}
+
+/* Indian Handicraft Pattern Decorative Motif Backgrounds */
+.bg-mandala-pattern {
+  background-color: #FDFBF7;
+  background-image: radial-gradient(#C85A32 0.75px, transparent 0.75px), radial-gradient(#C85A32 0.75px, #FDFBF7 0.75px);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+
+.bg-earthy-card {
+  background: linear-gradient(145deg, #FFFFFF 0%, #FAF6F0 100%);
+  border: 1px solid rgba(220, 115, 81, 0.15);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 90, 50, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(200, 90, 50, 0); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+.animate-float {
+  animation: floatSlow 4s ease-in-out infinite;
+}
