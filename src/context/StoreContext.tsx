@@ -29,7 +29,8 @@ export type AdminTab =
   | 'orders' 
   | 'users' 
   | 'payments' 
-  | 'categories';
+  | 'categories'
+  | 'wishlist';
 
 interface ToastState {
   message: string;
@@ -200,6 +201,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     loadApiData();
   }, []);
 
+  // Synchronize orders and wishlist dynamically whenever currentUser changes
+  useEffect(() => {
+    async function syncUserData() {
+      if (currentUser && currentUser.id) {
+        try {
+          const userOrders = await apiService.getMyOrders();
+          if (userOrders && Array.isArray(userOrders)) {
+            setOrders(userOrders);
+          }
+        } catch (err: any) {
+          console.error('❌ Failed to load user orders:', err);
+        }
+
+        try {
+          const wishlistRes = await apiService.getWishlist(currentUser.id);
+          if (wishlistRes && Array.isArray(wishlistRes.productIds)) {
+            setWishlist(wishlistRes.productIds);
+          }
+        } catch (err: any) {
+          console.error('❌ Failed to load user wishlist:', err);
+        }
+      } else {
+        setOrders([]);
+        setWishlist([]);
+      }
+    }
+
+    syncUserData();
+  }, [currentUser]);
+
   // UI state
   const [viewRole, setViewRole] = useState<'customer' | 'admin'>('customer');
   const [activeCustomerPage, setActiveCustomerPage] = useState<CustomerPage>('home');
@@ -332,6 +363,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const logoutUser = () => {
     setAuthToken(null);
     setCurrentUser(null);
+    setOrders([]);
+    setWishlist([]);
+    setCurrentCheckoutOrder(null);
+    setIsAuthModalOpen(false);
+    setIsCartDrawerOpen(false);
+    setActiveCustomerPage('home');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast('Logged out successfully', 'info');
   };
 

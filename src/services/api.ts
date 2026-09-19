@@ -257,6 +257,19 @@ export const apiService = {
       body: JSON.stringify({ productId, userId }),
     });
   },
+
+  async getAdminWishlists(): Promise<Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    productCount: number;
+    productIds: string[];
+    products: Array<{ id: string; name: string; price: number; image: string; categoryName: string }>;
+    updatedAt: string;
+  }>> {
+    return fetchJSON('/wishlist/admin');
+  },
 };
 
 export const api = apiService;

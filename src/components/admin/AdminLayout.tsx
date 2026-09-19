@@ -7,9 +7,10 @@ import { AdminOrders } from './AdminOrders';
 import { AdminUsers } from './AdminUsers';
 import { AdminPayments } from './AdminPayments';
 import { AdminCategories } from './AdminCategories';
+import { AdminWishlist } from './AdminWishlist';
 import { 
   LayoutDashboard, Package, Warehouse, ShoppingCart, Users, CreditCard, 
-  Layers, Store, Bell, Search, LogOut, Sparkles, ShieldAlert 
+  Layers, Store, Bell, Search, LogOut, Sparkles, ShieldAlert, Heart
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -151,6 +152,18 @@ export const AdminLayout: React.FC = () => {
                 <span>Category Manager</span>
               </div>
             </button>
+
+            <button
+              onClick={() => setActiveAdminTab('wishlist')}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all ${
+                activeAdminTab === 'wishlist' ? 'bg-terracotta-500 text-white shadow-sm font-bold' : 'text-earth-300 hover:bg-earth-800 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Heart className="w-4 h-4" />
+                <span>Wishlist Analytics</span>
+              </div>
+            </button>
           </nav>
         </div>
 
@@ -191,6 +204,7 @@ export const AdminLayout: React.FC = () => {
           {activeAdminTab === 'users' && <AdminUsers />}
           {activeAdminTab === 'payments' && <AdminPayments />}
           {activeAdminTab === 'categories' && <AdminCategories />}
+          {activeAdminTab === 'wishlist' && <AdminWishlist />}
         </main>
       </div>
     </div>

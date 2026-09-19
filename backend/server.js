@@ -4,12 +4,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import dns from 'dns';
 
-// Fix for Windows DNS resolution for MongoDB Atlas SRV records
 try {
   dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
-} catch (err) {
-  // Ignored if custom DNS setting is restricted
-}
+} catch (e) {}
 
 import path from 'path';
 import fs from 'fs';

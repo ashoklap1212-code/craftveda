@@ -1,14 +1,14 @@
 import express from 'express';
 import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
-import { protect, adminOrSeller } from '../middleware/authMiddleware.js';
+import { protect, adminOrSeller, optionalAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Public / Protected
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   try {
     const { 
       items, shippingAddress, subtotal, deliveryCharge, 
@@ -26,9 +26,12 @@ router.post('/', async (req, res) => {
     const orderNum = `CV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const nowStr = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
 
+    // Authenticated user ID takes precedence over body parameters
+    const authenticatedUserId = req.user ? (req.user.id || req.user._id) : (userId || 'guest-user');
+
     const newOrder = new Order({
       orderNumber: orderNum,
-      userId: userId || (req.user ? req.user.id : 'guest-user'),
+      userId: authenticatedUserId,
       customerName: shippingAddress.fullName,
       customerEmail: shippingAddress.email,
       customerPhone: shippingAddress.mobileNumber,
@@ -81,14 +84,27 @@ router.post('/', async (req, res) => {
   }
 });
 
-// @desc    Get all orders (Admin / Seller) or query by userId
+// @desc    Get orders (Admin sees all, Customer sees ONLY their own orders)
 // @route   GET /api/orders
 // @access  Public / Protected
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { userId } = req.query;
     let query = {};
-    if (userId) query.userId = userId;
+
+    if (req.user) {
+      if (req.user.role === 'admin' || req.user.role === 'seller') {
+        if (userId) query.userId = userId;
+      } else {
+        // Customer MUST ONLY see their own orders
+        query.userId = req.user.id || req.user._id;
+      }
+    } else if (userId) {
+      query.userId = userId;
+    } else {
+      // Unauthenticated request without explicit userId query gets empty list for security
+      return res.json([]);
+    }
 
     const orders = await Order.find(query).sort({ createdAt: -1 });
     res.json(orders);
@@ -102,7 +118,7 @@ router.get('/', async (req, res) => {
 // @access  Private
 router.get('/my-orders', protect, async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ userId: req.user.id || req.user._id }).sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch user orders', error: error.message });

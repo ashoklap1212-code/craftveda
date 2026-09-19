@@ -56,3 +56,31 @@ export const adminOnly = (req, res, next) => {
     return res.status(403).json({ message: 'Access denied: Admin permission required' });
   }
 };
+
+/**
+ * Optional Auth: Attaches req.user if valid JWT is present, without failing if absent
+ */
+export const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'craftveda_secret_jwt_key_2026_secure');
+      const user = await User.findById(decoded.id).select('-password');
+      if (user) {
+        req.user = user;
+      }
+    } catch (error) {
+      // Ignore token verification errors for optional auth
+    }
+  }
+
+  next();
+};
