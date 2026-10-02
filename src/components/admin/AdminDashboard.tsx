@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { api } from '../../services/api';
+import { apiService } from '../../services/api';
 import { 
   TrendingUp, ShoppingCart, Users, Package, AlertTriangle, CheckCircle2, ArrowUpRight, DollarSign 
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
-  const { orders, products, currentUser, setActiveAdminTab } = useStore();
+  const { orders, products, currentUser, setActiveAdminTab, fetchOrders } = useStore();
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const totalSales = orders.reduce((sum, o) => sum + o.totalAmount, 0);
   const totalOrders = orders.length;
@@ -285,7 +289,7 @@ const QuickAddProductForm: React.FC = () => {
 
       if (selectedFile) {
         try {
-          const uploadRes = await api.uploadProductImage(selectedFile);
+          const uploadRes = await apiService.uploadProductImage(selectedFile);
           finalImage = uploadRes.imageUrl;
         } catch (err: any) {
           console.error('❌ Upload error:', err);

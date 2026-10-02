@@ -1,19 +1,65 @@
 import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ShippingAddress } from '../../types';
+import { apiService } from '../../services/api';
 import { UpiPaymentModal } from './UpiPaymentModal';
 import { 
-  MapPin, ShoppingBag, CreditCard, ShieldCheck, ArrowLeft, ArrowRight, Check 
+  MapPin, ShoppingBag, CreditCard, ShieldCheck, ArrowLeft, ArrowRight, Check, Banknote, CheckCircle2
 } from 'lucide-react';
 
 export const CheckoutView: React.FC = () => {
   const { 
     cart, cartSubtotal, cartDiscount, cartTotal, 
-    currentUser, setActiveCustomerPage, showToast 
+    currentUser, setActiveCustomerPage, showToast, createOrder,
+    orderCharges
   } = useStore();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isUpiModalOpen, setIsUpiModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'UPI' | 'COD'>('UPI');
+  const [isSubmittingCod, setIsSubmittingCod] = useState(false);
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | undefined>(undefined);
+  const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
+  const [validatingCoupon, setValidatingCoupon] = useState<boolean>(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setValidatingCoupon(true);
+    try {
+      const res = await apiService.validateCoupon(couponInput.trim(), cartSubtotal);
+      if (res.valid) {
+        setAppliedCouponCode(res.code);
+        setAppliedDiscount(res.discountAmount);
+        showToast(res.message, 'success');
+      } else {
+        setAppliedCouponCode(undefined);
+        setAppliedDiscount(0);
+        showToast(res.message || 'Invalid coupon code', 'error');
+      }
+    } catch (err: any) {
+      setAppliedCouponCode(undefined);
+      setAppliedDiscount(0);
+      showToast(err.message || 'Failed to validate coupon code', 'error');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const finalPayableTotal = Math.max(0, cartTotal - appliedDiscount);
+
+  const handlePlaceCodOrder = async () => {
+    setIsSubmittingCod(true);
+    try {
+      await createOrder(address, 'COD', appliedCouponCode);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to place Cash on Delivery order', 'error');
+    } finally {
+      setIsSubmittingCod(false);
+    }
+  };
 
   // Address Form State
   const [address, setAddress] = useState<ShippingAddress>(() => {
@@ -287,15 +333,86 @@ export const CheckoutView: React.FC = () => {
                 ))}
               </div>
 
-              {/* Pay Buttons */}
-              <div className="space-y-3 pt-2">
-                <button
-                  onClick={() => setIsUpiModalOpen(true)}
-                  className="w-full bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-warm transition-all text-sm"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  <span>Pay ₹{cartTotal.toLocaleString('en-IN')} via UPI Gateway (Instant)</span>
-                </button>
+              {/* Payment Method Selector */}
+              <div className="space-y-3 pt-3 border-t border-earth-100">
+                <h4 className="text-xs font-bold text-earth-800 uppercase tracking-wider">Choose Payment Method</h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* UPI Gateway Option */}
+                  <div
+                    onClick={() => setSelectedPaymentMethod('UPI')}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between space-y-2 ${
+                      selectedPaymentMethod === 'UPI'
+                        ? 'bg-earth-900 text-white border-earth-900 shadow-md ring-2 ring-terracotta-500'
+                        : 'bg-cream-50 border-earth-200 text-earth-800 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-terracotta-400" />
+                        <span className="font-bold text-xs">UPI / Online Pay</span>
+                      </div>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        checked={selectedPaymentMethod === 'UPI'}
+                        onChange={() => setSelectedPaymentMethod('UPI')}
+                        className="accent-terracotta-500 cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[10px] opacity-80">Instant approval via GPay, PhonePe, Paytm, QR Code.</p>
+                  </div>
+
+                  {/* Cash on Delivery (COD) Option */}
+                  <div
+                    onClick={() => setSelectedPaymentMethod('COD')}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between space-y-2 ${
+                      selectedPaymentMethod === 'COD'
+                        ? 'bg-earth-900 text-white border-earth-900 shadow-md ring-2 ring-terracotta-500'
+                        : 'bg-cream-50 border-earth-200 text-earth-800 hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Banknote className="w-4 h-4 text-emerald-400" />
+                        <span className="font-bold text-xs">Cash on Delivery (COD)</span>
+                      </div>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        checked={selectedPaymentMethod === 'COD'}
+                        onChange={() => setSelectedPaymentMethod('COD')}
+                        className="accent-terracotta-500 cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[10px] opacity-80">Pay cash directly when parcel is delivered to doorstep.</p>
+                  </div>
+                </div>
+
+                {selectedPaymentMethod === 'UPI' ? (
+                  <button
+                    onClick={() => setIsUpiModalOpen(true)}
+                    className="w-full bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-warm transition-all text-sm cursor-pointer mt-2"
+                  >
+                    <CreditCard className="w-5 h-5" />
+                    <span>Pay ₹{finalPayableTotal.toLocaleString('en-IN')} via UPI Gateway (Instant)</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePlaceCodOrder}
+                    disabled={isSubmittingCod}
+                    className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-warm transition-all text-sm cursor-pointer disabled:opacity-50 mt-2"
+                  >
+                    {isSubmittingCod ? (
+                      <span>Placing Cash on Delivery Order...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span>Place Order with Cash on Delivery (₹{finalPayableTotal.toLocaleString('en-IN')})</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -314,14 +431,48 @@ export const CheckoutView: React.FC = () => {
                 <span className="font-bold text-earth-900">₹{cartSubtotal.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between">
-                <span>Safe Fragile Shipping</span>
+                <span>{orderCharges.safeFragileShippingLabel}</span>
                 <span className="font-bold text-earth-900">
-                  {cartSubtotal > 1499 ? <span className="text-emerald-600 font-bold">FREE</span> : '₹99'}
+                  {(orderCharges.isFreeShippingEnabled && cartSubtotal >= orderCharges.freeShippingThreshold)
+                    ? <span className="text-emerald-600 font-bold">FREE</span>
+                    : `₹${orderCharges.shippingFee + orderCharges.packagingFee}`
+                  }
                 </span>
               </div>
+
+              {/* Coupon Code Section */}
+              <div className="pt-2 border-t border-earth-200 space-y-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-earth-700 block">
+                  Have a Discount Coupon?
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter code (e.g. CRAFT10)"
+                    value={couponInput}
+                    onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                    className="flex-1 bg-white border border-earth-200 rounded-xl px-3 py-2 text-xs uppercase font-mono text-earth-900 focus:outline-none focus:ring-1 focus:ring-terracotta-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={validatingCoupon || !couponInput.trim()}
+                    className="bg-earth-900 hover:bg-earth-800 text-white text-xs font-bold px-3 py-2 rounded-xl disabled:opacity-50 transition-all"
+                  >
+                    {validatingCoupon ? '...' : 'Apply'}
+                  </button>
+                </div>
+                {appliedCouponCode && (
+                  <div className="flex justify-between text-xs text-emerald-600 font-bold bg-emerald-50 p-2 rounded-xl border border-emerald-200">
+                    <span>Code {appliedCouponCode} Applied:</span>
+                    <span>-₹{appliedDiscount.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-between text-sm font-serif font-extrabold text-earth-900 pt-3 border-t border-earth-200">
                 <span>Total Amount Payable</span>
-                <span className="text-terracotta-600">₹{cartTotal.toLocaleString('en-IN')}</span>
+                <span className="text-terracotta-600">₹{finalPayableTotal.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
@@ -343,7 +494,8 @@ export const CheckoutView: React.FC = () => {
         isOpen={isUpiModalOpen}
         onClose={() => setIsUpiModalOpen(false)}
         shippingAddress={address}
-        totalAmount={cartTotal}
+        couponCode={appliedCouponCode}
+        totalAmount={finalPayableTotal}
       />
     </div>
   );

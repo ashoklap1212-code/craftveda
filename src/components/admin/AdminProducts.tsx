@@ -380,8 +380,8 @@ export const AdminProducts: React.FC = () => {
 
       {/* Add / Edit Product Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-earth-950/80 backdrop-blur-md overflow-y-auto w-full h-full animate-fade-in">
-          <div className="bg-earth-900 border border-earth-700 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 overflow-y-auto max-h-[88vh] shadow-2xl relative my-auto border-t-4 border-t-terracotta-500">
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 backdrop-blur-sm p-4 sm:p-6 flex items-start sm:items-center justify-center w-full h-full animate-fade-in">
+          <div className="bg-earth-900 border border-earth-700 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 overflow-y-auto max-h-[calc(100vh-2rem)] shadow-2xl relative my-auto border-t-4 border-t-terracotta-500">
             <div className="flex justify-between items-center border-b border-earth-800 pb-3">
               <div>
                 <h3 className="font-serif font-extrabold text-xl text-white">

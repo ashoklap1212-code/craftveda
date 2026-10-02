@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { OrderStatus } from '../../types';
-import { ShoppingCart, Search, Eye, CheckCircle2, Truck, PackageCheck, Clock, ShieldAlert } from 'lucide-react';
+import { ShoppingCart, Search, Eye, CheckCircle2, Truck, PackageCheck, Clock, ShieldAlert, RefreshCw } from 'lucide-react';
 
 export const AdminOrders: React.FC = () => {
-  const { orders, updateOrderStatus } = useStore();
+  const { orders, updateOrderStatus, fetchOrders } = useStore();
   const [search, setSearch] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const filteredOrders = orders.filter(o => {
     if (selectedStatusFilter !== 'all' && o.currentStatus !== selectedStatusFilter) return false;
@@ -33,20 +37,26 @@ export const AdminOrders: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in text-earth-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Panel */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-earth-900 border border-earth-800 p-6 rounded-3xl">
         <div>
-          <h2 className="font-serif text-2xl font-extrabold text-white">Order Management & Fulfillment</h2>
-          <p className="text-xs text-earth-400">Update order status (Packed/Shipped/Delivered) — directly syncs customer tracking timeline</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="bg-terracotta-500/20 text-terracotta-400 border border-terracotta-500/30 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md">
+              Order Fulfillment
+            </span>
+          </div>
+          <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-white">Order Management & Fulfillment</h2>
+          <p className="text-xs text-earth-400 mt-1">Update order status (Packed/Shipped/Delivered) — directly syncs customer tracking timeline</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <div className="relative">
             <input
               type="text"
               placeholder="Search Order ID / Customer..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-earth-900 border border-earth-700 rounded-full px-4 py-2 pl-9 text-xs text-white placeholder-earth-400 focus:outline-none"
+              className="bg-earth-800 border border-earth-700 rounded-full px-4 py-2 pl-9 text-xs text-white placeholder-earth-400 focus:outline-none focus:border-terracotta-500"
             />
             <Search className="w-3.5 h-3.5 text-earth-400 absolute left-3 top-2.5" />
           </div>
@@ -54,7 +64,7 @@ export const AdminOrders: React.FC = () => {
           <select
             value={selectedStatusFilter}
             onChange={e => setSelectedStatusFilter(e.target.value)}
-            className="bg-earth-900 border border-earth-700 rounded-full px-3 py-2 text-xs text-white focus:outline-none font-bold"
+            className="bg-earth-800 border border-earth-700 rounded-full px-3 py-2 text-xs text-white focus:outline-none font-bold"
           >
             <option value="all">All Statuses ({orders.length})</option>
             {statuses.map(s => <option key={s} value={s}>{s}</option>)}
@@ -120,8 +130,8 @@ export const AdminOrders: React.FC = () => {
 
       {/* Order Details Modal */}
       {activeOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="bg-earth-900 border border-earth-700 rounded-3xl max-w-xl w-full p-6 space-y-4 text-xs text-earth-200 overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm p-4 sm:p-6 flex items-start sm:items-center justify-center animate-fade-in">
+          <div className="relative bg-earth-900 border border-earth-700 rounded-3xl max-w-xl w-full p-6 space-y-4 text-xs text-earth-200 overflow-y-auto max-h-[calc(100vh-2rem)] my-auto shadow-2xl">
             <div className="flex justify-between items-center border-b border-earth-800 pb-3">
               <div>
                 <h3 className="font-serif font-bold text-lg text-white">Order Details — #{activeOrder.orderNumber}</h3>

@@ -17,23 +17,15 @@ import { CheckoutView } from './components/customer/CheckoutModal';
 import { OrderConfirmationView } from './components/customer/OrderConfirmationView';
 import { OrderTrackingView } from './components/customer/OrderTrackingView';
 import { UserProfileView } from './components/customer/UserProfileView';
+import { PersonalDetailsView } from './components/customer/PersonalDetailsView';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { ArrowRight, Phone, Mail, MapPin, Sparkles } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
   const { 
-    viewRole, activeCustomerPage, setActiveCustomerPage, 
+    activeCustomerPage, setActiveCustomerPage, 
     products, setSelectedCategoryFilter 
   } = useStore();
-
-  if (viewRole === 'admin') {
-    return (
-      <>
-        <AdminLayout />
-        <Toast />
-      </>
-    );
-  }
 
   const featuredProducts = products.filter(p => p.isFeatured).slice(0, 4);
   const newArrivals = products.filter(p => p.isNewArrival || p.isFeatured).slice(0, 4);
@@ -154,6 +146,9 @@ const MainAppContent: React.FC = () => {
 
         {/* USER PROFILE PAGE */}
         {activeCustomerPage === 'profile' && <UserProfileView />}
+
+        {/* PERSONAL DETAILS PAGE */}
+        {activeCustomerPage === 'personal-details' && <PersonalDetailsView />}
 
         {/* OUR STORY PAGE */}
         {activeCustomerPage === 'about' && (

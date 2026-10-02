@@ -177,18 +177,28 @@ export const ProductGrid: React.FC = () => {
               >
                 All Categories ({products.length})
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategoryFilter(cat.id)}
-                  className={`w-full text-left px-3 py-2 rounded-xl transition-all font-medium flex items-center justify-between ${
-                    selectedCategoryFilter === cat.id ? 'bg-terracotta-50 text-terracotta-700 font-bold' : 'hover:bg-cream-100'
-                  }`}
-                >
-                  <span>{cat.name}</span>
-                  <span className="text-[10px] text-earth-400">({cat.itemCount})</span>
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const count = products.filter(p => {
+                  if (!p.category) return false;
+                  const pCat = p.category.toLowerCase().trim();
+                  const cId = cat.id.toLowerCase().trim();
+                  const cName = cat.name.toLowerCase().trim();
+                  return pCat === cId || pCat === cName || pCat.replace(/[^a-z0-9]/g, '') === cId.replace(/[^a-z0-9]/g, '');
+                }).length;
+
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategoryFilter(cat.id)}
+                    className={`w-full text-left px-3 py-2 rounded-xl transition-all font-medium flex items-center justify-between ${
+                      selectedCategoryFilter === cat.id ? 'bg-terracotta-50 text-terracotta-700 font-bold' : 'hover:bg-cream-100'
+                    }`}
+                  >
+                    <span>{cat.name}</span>
+                    <span className="text-[10px] text-earth-400 font-bold">({count})</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

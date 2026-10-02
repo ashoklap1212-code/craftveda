@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from './ProductCard';
 import { 
-  User as UserIcon, PackageCheck, Heart, MapPin, Bell, LogOut, Edit3, Plus, Trash2, CheckCircle2, Shield 
+  User as UserIcon, PackageCheck, Heart, MapPin, Bell, LogOut, Edit3, Plus, CheckCircle2, Trash2, CheckCheck 
 } from 'lucide-react';
 
 export const UserProfileView: React.FC = () => {
   const { 
     currentUser, updateUserProfile, addSavedAddress, orders, wishlist, products,
-    notifications, markNotificationAsRead, markAllNotificationsAsRead,
+    notifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification,
     navigateToOrderTracking, logoutUser, setIsAuthModalOpen,
     activeProfileTab, setActiveProfileTab
   } = useStore();
@@ -19,8 +19,8 @@ export const UserProfileView: React.FC = () => {
   // Profile Edit State
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(currentUser?.name || '');
-  const [email, setEmail] = useState(currentUser?.email || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [profileImage, setProfileImage] = useState(currentUser?.profileImage || '');
 
   // Add Address State
   const [isAddingAddress, setIsAddingAddress] = useState(false);
@@ -37,7 +37,7 @@ export const UserProfileView: React.FC = () => {
           👤
         </div>
         <h3 className="font-serif font-bold text-2xl text-earth-900">Please Sign In</h3>
-        <p className="text-xs text-earth-500">Sign in to view your orders, saved addresses, wishlist & account settings.</p>
+        <p className="text-xs text-earth-500">Sign in to view your orders, saved addresses, wishlist & notifications.</p>
         <button
           onClick={() => setIsAuthModalOpen(true)}
           className="bg-terracotta-500 text-white font-bold px-8 py-3 rounded-full text-xs shadow-warm"
@@ -50,17 +50,17 @@ export const UserProfileView: React.FC = () => {
 
   const userWishlistProducts = products.filter(p => wishlist.includes(p.id));
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile({ name, email, phone });
+    await updateUserProfile({ name, phone, profileImage });
     setIsEditing(false);
   };
 
   const handleAddAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     addSavedAddress({
-      fullName: currentUser.name,
-      mobileNumber: currentUser.phone,
+      fullName: currentUser.name || 'Craft Patron',
+      mobileNumber: currentUser.phone || '+91 98765 43210',
       email: currentUser.email,
       houseFlat: newHouse,
       street: newStreet,
@@ -79,8 +79,14 @@ export const UserProfileView: React.FC = () => {
       {/* Profile Header Banner */}
       <div className="bg-earthy-card p-6 sm:p-8 rounded-3xl border border-earth-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4 text-center sm:text-left">
-          <div className="w-20 h-20 rounded-full bg-terracotta-500 text-white font-serif font-extrabold text-3xl flex items-center justify-center border-4 border-white shadow-warm shrink-0">
-            {currentUser.name && currentUser.name.trim() ? currentUser.name.trim().charAt(0).toUpperCase() : <UserIcon className="w-10 h-10" />}
+          <div className="w-20 h-20 rounded-full bg-terracotta-500 text-white font-serif font-extrabold text-3xl flex items-center justify-center border-4 border-white shadow-warm shrink-0 overflow-hidden">
+            {currentUser.profileImage ? (
+              <img src={currentUser.profileImage} alt="" className="w-full h-full object-cover" />
+            ) : currentUser.name && currentUser.name.trim() ? (
+              currentUser.name.trim().charAt(0).toUpperCase()
+            ) : (
+              <UserIcon className="w-10 h-10" />
+            )}
           </div>
           <div>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
@@ -89,7 +95,7 @@ export const UserProfileView: React.FC = () => {
               </span>
               <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                {currentUser.authProvider === 'google' ? 'Google Authenticated' : 'Email OTP Verified'}
+                {currentUser.authProvider === 'google' ? 'Google Authenticated' : 'Email Verified'}
               </span>
             </div>
             <h1 className="font-serif text-2xl font-extrabold text-earth-900 mt-1">{currentUser.name || 'Craft Patron'}</h1>
@@ -114,7 +120,7 @@ export const UserProfileView: React.FC = () => {
             activeTab === 'profile' ? 'text-terracotta-600 border-b-2 border-terracotta-500' : 'text-earth-500 hover:text-earth-800'
           }`}
         >
-          <UserIcon className="w-4 h-4" /> Account Settings
+          <UserIcon className="w-4 h-4" /> Personal Details
         </button>
         <button
           onClick={() => setActiveTab('orders')}
@@ -130,7 +136,7 @@ export const UserProfileView: React.FC = () => {
             activeTab === 'addresses' ? 'text-terracotta-600 border-b-2 border-terracotta-500' : 'text-earth-500 hover:text-earth-800'
           }`}
         >
-          <MapPin className="w-4 h-4" /> Saved Addresses ({currentUser.savedAddresses.length})
+          <MapPin className="w-4 h-4" /> Saved Addresses ({currentUser.savedAddresses ? currentUser.savedAddresses.length : 0})
         </button>
         <button
           onClick={() => setActiveTab('wishlist')}
@@ -160,8 +166,8 @@ export const UserProfileView: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setName(currentUser.name || '');
-                  setEmail(currentUser.email || '');
                   setPhone(currentUser.phone || '');
+                  setProfileImage(currentUser.profileImage || '');
                   setIsEditing(true);
                 }}
                 className="text-xs font-bold text-terracotta-600 hover:underline flex items-center gap-1 bg-cream-100 px-3 py-1.5 rounded-xl border border-earth-200"
@@ -188,31 +194,43 @@ export const UserProfileView: React.FC = () => {
                 disabled={!isEditing}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your Name"
+                placeholder="Enter your name"
                 className="w-full bg-cream-50 disabled:bg-cream-100/60 border border-earth-200 rounded-xl px-3.5 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 outline-none font-medium"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-earth-700 mb-1">Email Address</label>
+              <label className="block text-xs font-bold text-earth-700 mb-1">
+                Email Address <span className="text-emerald-600 text-[10px] font-semibold">(Verified & Read-only)</span>
+              </label>
               <input
                 type="email"
-                disabled={!isEditing}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full bg-cream-50 disabled:bg-cream-100/60 border border-earth-200 rounded-xl px-3.5 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 outline-none font-medium"
+                disabled
+                value={currentUser.email}
+                className="w-full bg-cream-100 border border-earth-200 rounded-xl px-3.5 py-2.5 text-xs text-earth-600 font-medium cursor-not-allowed outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-earth-700 mb-1">Mobile Number</label>
+              <label className="block text-xs font-bold text-earth-700 mb-1">Mobile Number (Optional)</label>
               <input
                 type="tel"
                 disabled={!isEditing}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 XXXXX XXXXX"
+                className="w-full bg-cream-50 disabled:bg-cream-100/60 border border-earth-200 rounded-xl px-3.5 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 outline-none font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-earth-700 mb-1">Profile Image URL (Optional)</label>
+              <input
+                type="text"
+                disabled={!isEditing}
+                value={profileImage}
+                onChange={(e) => setProfileImage(e.target.value)}
+                placeholder="https://example.com/avatar.jpg"
                 className="w-full bg-cream-50 disabled:bg-cream-100/60 border border-earth-200 rounded-xl px-3.5 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 outline-none font-medium"
               />
             </div>
@@ -242,7 +260,12 @@ export const UserProfileView: React.FC = () => {
       {activeTab === 'orders' && (
         <div className="space-y-4">
           {orders.length === 0 ? (
-            <p className="text-xs text-earth-500 text-center py-12">No orders placed yet.</p>
+            <div className="text-center py-12 bg-white rounded-3xl border border-earth-200 p-8 space-y-3">
+              <div className="w-12 h-12 rounded-full bg-cream-100 text-earth-400 flex items-center justify-center mx-auto text-xl">
+                📦
+              </div>
+              <p className="text-xs text-earth-500">No orders placed yet.</p>
+            </div>
           ) : (
             orders.map((o) => (
               <div key={o.id} className="bg-white p-6 rounded-3xl border border-earth-200 shadow-sm space-y-4">
@@ -280,7 +303,7 @@ export const UserProfileView: React.FC = () => {
                 </div>
 
                 <div className="pt-3 border-t border-earth-100 flex justify-between items-center text-xs">
-                  <span className="text-earth-500">Paid via {o.payment.paymentMethod}</span>
+                  <span className="text-earth-500">Paid via {o.payment?.paymentMethod || 'UPI'}</span>
                   <span className="font-serif font-extrabold text-base text-terracotta-600">Total: ₹{o.totalAmount.toLocaleString('en-IN')}</span>
                 </div>
               </div>
@@ -293,7 +316,7 @@ export const UserProfileView: React.FC = () => {
       {activeTab === 'addresses' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h3 className="font-serif font-bold text-lg text-earth-900">Manage Saved Delivery Addresses</h3>
+            <h3 className="font-serif font-bold text-lg text-earth-900">Saved Delivery Addresses</h3>
             <button
               onClick={() => setIsAddingAddress(!isAddingAddress)}
               className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow-sm"
@@ -317,7 +340,7 @@ export const UserProfileView: React.FC = () => {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {currentUser.savedAddresses.map((addr, idx) => (
+            {currentUser.savedAddresses && currentUser.savedAddresses.map((addr, idx) => (
               <div key={idx} className="bg-white p-5 rounded-3xl border border-earth-200 space-y-2 text-xs text-earth-800 shadow-sm relative">
                 <span className="font-bold text-earth-900 block">{addr.fullName}</span>
                 <p className="text-earth-600">{addr.houseFlat}, {addr.street}</p>
@@ -349,20 +372,55 @@ export const UserProfileView: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-earth-200 space-y-4 shadow-sm">
           <div className="flex justify-between items-center border-b border-earth-100 pb-3">
             <h3 className="font-serif font-bold text-lg text-earth-900">Notification Center</h3>
-            <button onClick={markAllNotificationsAsRead} className="text-xs text-terracotta-600 hover:underline font-bold">
-              Mark All Read
-            </button>
+            {notifications.filter(n => !n.read).length > 0 && (
+              <button onClick={markAllNotificationsAsRead} className="text-xs text-terracotta-600 hover:underline font-bold flex items-center gap-1">
+                <CheckCheck className="w-4 h-4" /> Mark All Read
+              </button>
+            )}
           </div>
           <div className="space-y-3">
-            {notifications.map(n => (
-              <div key={n.id} onClick={() => markNotificationAsRead(n.id)} className={`p-4 rounded-2xl border text-xs cursor-pointer ${n.isRead ? 'bg-cream-50 border-earth-100' : 'bg-terracotta-50/70 border-terracotta-200 font-medium'}`}>
-                <div className="flex justify-between font-bold text-earth-900 mb-1">
-                  <span>{n.title}</span>
-                  <span className="text-[10px] text-earth-400">{n.timestamp}</span>
+            {notifications.length === 0 ? (
+              <p className="text-xs text-earth-400 text-center py-8">No notifications</p>
+            ) : (
+              notifications.map(n => (
+                <div 
+                  key={n.id} 
+                  className={`p-4 rounded-2xl border text-xs flex justify-between items-start gap-4 ${
+                    n.read ? 'bg-cream-50 border-earth-100' : 'bg-terracotta-50/70 border-terracotta-200 font-medium'
+                  }`}
+                >
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-earth-900">{n.title}</span>
+                      {!n.read && (
+                        <span className="bg-terracotta-500 w-2 h-2 rounded-full inline-block"></span>
+                      )}
+                    </div>
+                    <p className="text-earth-600 leading-relaxed">{n.message}</p>
+                    <span className="text-[10px] text-earth-400 block pt-1 font-mono">
+                      {n.createdAt ? new Date(n.createdAt).toLocaleString('en-IN') : 'Just now'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!n.read && (
+                      <button
+                        onClick={() => markNotificationAsRead(n.id)}
+                        className="text-xs text-terracotta-600 hover:underline font-bold"
+                      >
+                        Mark read
+                      </button>
+                    )}
+                    <button
+                      onClick={() => deleteNotification(n.id)}
+                      className="text-earth-400 hover:text-rose-600 p-1 transition-colors"
+                      title="Delete notification"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-earth-600 leading-relaxed">{n.message}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}

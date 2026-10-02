@@ -2,29 +2,38 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 
 /**
- * Protect routes: Requires valid JWT token in Authorization header
- * Example: Authorization: Bearer <jwt_token>
+ * Helper to extract JWT token from cookies or Authorization header
+ */
+const extractToken = (req) => {
+  if (req.cookies && req.cookies.craftveda_session) {
+    return req.cookies.craftveda_session;
+  }
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    return req.headers.authorization.split(' ')[1];
+  }
+  return null;
+};
+
+/**
+ * Protect routes: Requires valid JWT token in HttpOnly cookie or Authorization header
  */
 export const protect = async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  const token = extractToken(req);
 
   if (!token) {
     return res.status(401).json({ message: 'Not authorized, no token provided' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'craftveda_secret_jwt_key_2026_secure');
-    const user = await User.findById(decoded.id).select('-password');
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'craftveda_secret_jwt_key_2026_secure'
+    );
 
-    if (!user) {
-      return res.status(401).json({ message: 'User account no longer exists' });
+    const user = await User.findById(decoded.id);
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({ message: 'User account no longer exists or is inactive' });
     }
 
     req.user = user;
@@ -61,20 +70,16 @@ export const adminOnly = (req, res, next) => {
  * Optional Auth: Attaches req.user if valid JWT is present, without failing if absent
  */
 export const optionalAuth = async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  const token = extractToken(req);
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'craftveda_secret_jwt_key_2026_secure');
-      const user = await User.findById(decoded.id).select('-password');
-      if (user) {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'craftveda_secret_jwt_key_2026_secure'
+      );
+      const user = await User.findById(decoded.id);
+      if (user && user.isActive) {
         req.user = user;
       }
     } catch (error) {

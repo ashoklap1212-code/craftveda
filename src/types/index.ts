@@ -38,7 +38,7 @@ export interface Product {
   dimensions: string;
   weight: string;
   color: string;
-  manufacturingType: string; // e.g. "Hand-thrown Clay", "Terracotta Fired"
+  manufacturingType: string;
   careInstructions: string;
   suitableUsage: string;
   packagingInfo: string;
@@ -139,9 +139,13 @@ export interface User {
   phone: string;
   avatar: string;
   profileImage?: string;
+  googleId?: string | null;
   authProvider?: 'email' | 'google';
   isEmailVerified?: boolean;
+  profileCompleted?: boolean;
   role: 'customer' | 'admin' | string;
+  isMainAdmin?: boolean;
+  adminPermissions?: string[];
   savedAddresses: ShippingAddress[];
   joinedDate?: string;
   isActive?: boolean;
@@ -151,12 +155,15 @@ export interface User {
 
 export interface Notification {
   id: string;
-  userId: string; // 'all' | specific user id
+  _id?: string;
+  userId: string;
+  type: string;
   title: string;
   message: string;
-  timestamp: string;
-  isRead: boolean;
-  type: 'order' | 'payment' | 'promotional' | 'system' | 'inventory';
+  read?: boolean;
+  isRead?: boolean;
+  timestamp?: string;
+  createdAt?: string;
   relatedOrderId?: string;
 }
 
@@ -168,4 +175,30 @@ export interface FilterOptions {
   inStockOnly: boolean;
   searchQuery: string;
   sortBy: 'price-asc' | 'price-desc' | 'rating' | 'newest' | 'popularity';
+}
+
+export interface Coupon {
+  id: string;
+  _id?: string;
+  code: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderAmount: number;
+  maxDiscountAmount?: number;
+  usageLimit?: number;
+  usageCount?: number;
+  expiryDate?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface OrderCharges {
+  id?: string;
+  shippingFee: number;
+  packagingFee: number;
+  freeShippingThreshold: number;
+  safeFragileShippingLabel: string;
+  isFreeShippingEnabled: boolean;
+  updatedBy?: string;
 }

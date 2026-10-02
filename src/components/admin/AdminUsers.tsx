@@ -45,7 +45,7 @@ export const AdminUsers: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in text-earth-100">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-earth-900 border border-earth-800 p-6 rounded-3xl">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="bg-terracotta-500/20 text-terracotta-400 border border-terracotta-500/30 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md">
@@ -53,7 +53,7 @@ export const AdminUsers: React.FC = () => {
             </span>
             <span className="text-xs text-earth-400 font-medium">• Total ({users.length}) Users</span>
           </div>
-          <h2 className="font-serif text-2xl font-extrabold text-white">Registered User Management</h2>
+          <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-white">Registered User Management</h2>
           <p className="text-xs text-earth-400 mt-0.5">Real-time user accounts from MongoDB Atlas users collection</p>
         </div>
 

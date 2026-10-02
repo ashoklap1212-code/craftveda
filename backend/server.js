@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import dns from 'dns';
 
@@ -25,12 +26,16 @@ import productRoutes from './routes/productRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import wishlistRoutes from './routes/wishlistRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
+import orderChargesRoutes from './routes/orderChargesRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI ? process.env.MONGO_URI.trim() : '';
 
-// 1. Standard CORS Configuration for React Frontend (Port 5173, 5174, etc.)
+// 1. CORS Configuration for Cookie-Based Authentication
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -59,10 +64,11 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-// Enable standard cors middleware for all routes (automatically handles preflight OPTIONS)
+// Enable cors middleware with credentials: true
 app.use(cors(corsOptions));
 
-// 2. Request Body Parser Middleware
+// 2. Cookie Parser & Body Parser Middleware
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(uploadsDir));
@@ -78,6 +84,7 @@ app.get('/', (req, res) => {
       '/api/auth',
       '/api/orders',
       '/api/wishlist',
+      '/api/notifications',
     ],
   });
 });
@@ -94,6 +101,10 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/order-charges', orderChargesRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // 5. 404 Route Not Found Middleware
 app.use((req, res, next) => {
@@ -119,6 +130,14 @@ const connectDatabaseAndStartServer = async () => {
       console.log('⏳ Connecting to MongoDB Atlas...');
       await mongoose.connect(MONGO_URI);
       console.log('✅ Connected to MongoDB Atlas Database successfully!');
+      
+      // Safely drop legacy googleId_1 index if present
+      try {
+        await mongoose.connection.db.collection('users').dropIndex('googleId_1');
+        console.log('🧹 Cleaned up legacy googleId_1 index from users collection');
+      } catch (idxErr) {
+        // Index didn't exist or already dropped
+      }
     }
   } catch (error) {
     console.error('❌ Database Connection Error:', error.message);

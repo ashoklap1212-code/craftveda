@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStore, CustomerPage } from '../../context/StoreContext';
 import { 
   ShoppingBag, Heart, User, Search, Bell, Menu, X, 
-  Sparkles, ShieldCheck, ChevronDown, LogOut, PackageCheck, LayoutDashboard, Store
+  ChevronDown, LogOut, PackageCheck, LayoutDashboard, Store, CheckCircle, Trash2, CheckCheck
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -12,8 +12,8 @@ export const Navbar: React.FC = () => {
     cart, wishlist, notifications, currentUser,
     setIsCartDrawerOpen, setIsAuthModalOpen,
     searchQuery, setSearchQuery, setSelectedCategoryFilter,
-    logoutUser, markAllNotificationsAsRead,
-    navigateToWishlist, setActiveProfileTab
+    logoutUser, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification,
+    navigateToWishlist
   } = useStore();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -22,7 +22,7 @@ export const Navbar: React.FC = () => {
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistCount = wishlist.length;
-  const unreadNotifCount = notifications.filter(n => !n.isRead).length;
+  const unreadNotifCount = notifications.filter(n => !n.read).length;
 
   const handleNavClick = (page: CustomerPage, category?: string) => {
     setActiveCustomerPage(page);
@@ -43,9 +43,8 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-cream-50/95 backdrop-blur-md border-b border-earth-100 shadow-sm">
-      {/* Top Banner: Role Switcher & Announcement */}
       <div className="bg-earth-800 text-cream-100 px-4 py-1.5 text-xs font-medium flex items-center justify-between">
-        <div className="flex items-center gap-2 container mx-auto">
+        <div className="flex items-center gap-2 container mx-auto justify-center sm:justify-start">
           <span className="bg-terracotta-500 text-white px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider">
             Heritage Craft
           </span>
@@ -53,26 +52,6 @@ export const Navbar: React.FC = () => {
             Authentic Traditional Pots, Handi & Indian Home Decor Direct From Artisans
           </span>
           <span className="sm:hidden text-cream-200">Free shipping on orders above ₹1,499</span>
-        </div>
-
-        {/* Global Demo Switcher */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewRole(viewRole === 'customer' ? 'admin' : 'customer')}
-            className="flex items-center gap-1.5 bg-terracotta-600 hover:bg-terracotta-700 text-white px-2.5 py-1 rounded-full text-xs font-semibold transition-all shadow-sm"
-          >
-            {viewRole === 'customer' ? (
-              <>
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Switch to Admin Panel</span>
-              </>
-            ) : (
-              <>
-                <Store className="w-3.5 h-3.5" />
-                <span>Switch to Customer Shop</span>
-              </>
-            )}
-          </button>
         </div>
       </div>
 
@@ -128,7 +107,7 @@ export const Navbar: React.FC = () => {
             >
               <Bell className="w-5 h-5" />
               {unreadNotifCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-terracotta-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1 w-4.5 h-4.5 bg-terracotta-500 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                   {unreadNotifCount}
                 </span>
               )}
@@ -136,40 +115,67 @@ export const Navbar: React.FC = () => {
 
             {/* Notification Menu */}
             {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-warm border border-earth-100 p-4 z-50 animate-fade-in">
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-warm-hover border border-earth-100 p-4 z-50 animate-fade-in">
                 <div className="flex items-center justify-between border-b border-earth-100 pb-3 mb-3">
-                  <h4 className="font-serif font-bold text-base text-earth-800">Notifications</h4>
+                  <div className="flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-terracotta-600" />
+                    <h4 className="font-serif font-extrabold text-base text-earth-900">Notifications</h4>
+                    {unreadNotifCount > 0 && (
+                      <span className="bg-terracotta-100 text-terracotta-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {unreadNotifCount} unread
+                      </span>
+                    )}
+                  </div>
                   {unreadNotifCount > 0 && (
                     <button 
                       onClick={markAllNotificationsAsRead} 
-                      className="text-xs text-terracotta-600 hover:underline font-medium"
+                      className="text-xs text-terracotta-600 hover:underline font-bold flex items-center gap-1"
                     >
-                      Mark all as read
+                      <CheckCheck className="w-3.5 h-3.5" /> Mark all read
                     </button>
                   )}
                 </div>
-                <div className="max-h-72 overflow-y-auto space-y-2">
+                <div className="max-h-80 overflow-y-auto space-y-2.5 pr-1">
                   {notifications.length === 0 ? (
-                    <p className="text-xs text-earth-400 text-center py-6">No notifications yet</p>
+                    <div className="text-center py-8 space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-cream-100 text-earth-400 flex items-center justify-center mx-auto text-lg">
+                        🔔
+                      </div>
+                      <p className="text-xs text-earth-500 font-medium">No notifications yet</p>
+                    </div>
                   ) : (
                     notifications.map((n) => (
                       <div 
                         key={n.id}
-                        onClick={() => {
-                          if (n.relatedOrderId) {
-                            handleNavClick('track-order');
-                          }
-                          setIsNotificationsOpen(false);
-                        }}
-                        className={`p-3 rounded-xl text-xs cursor-pointer transition-colors ${
-                          n.isRead ? 'bg-cream-50 hover:bg-cream-100' : 'bg-terracotta-50/60 border border-terracotta-100 hover:bg-terracotta-50'
+                        className={`p-3.5 rounded-2xl text-xs transition-all relative group ${
+                          n.read ? 'bg-cream-50/80 border border-earth-100' : 'bg-terracotta-50/70 border border-terracotta-200'
                         }`}
                       >
-                        <div className="flex items-center justify-between font-bold text-earth-800 mb-1">
-                          <span>{n.title}</span>
-                          <span className="text-[10px] font-normal text-earth-400">{n.timestamp}</span>
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <span className="font-bold text-earth-900 leading-tight">{n.title}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {!n.read && (
+                              <button
+                                onClick={() => markNotificationAsRead(n.id)}
+                                className="text-terracotta-600 hover:text-terracotta-800 p-0.5"
+                                title="Mark as read"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => deleteNotification(n.id)}
+                              className="text-earth-400 hover:text-rose-600 p-0.5 transition-colors"
+                              title="Delete notification"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-earth-600 leading-relaxed">{n.message}</p>
+                        <p className="text-earth-600 leading-relaxed text-[11px] mb-1">{n.message}</p>
+                        <span className="text-[9px] font-mono text-earth-400">
+                          {n.createdAt ? new Date(n.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                        </span>
                       </div>
                     ))
                   )}
@@ -211,8 +217,14 @@ export const Navbar: React.FC = () => {
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="flex items-center gap-2 p-1.5 rounded-full hover:bg-cream-200 border border-earth-200 transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-terracotta-500 text-white font-bold text-xs flex items-center justify-center shadow-sm shrink-0">
-                  {currentUser.name && currentUser.name.trim() ? currentUser.name.trim().charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+                <div className="w-7 h-7 rounded-full bg-terracotta-500 text-white font-bold text-xs flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                  {currentUser.profileImage ? (
+                    <img src={currentUser.profileImage} alt="" className="w-full h-full object-cover" />
+                  ) : currentUser.name && currentUser.name.trim() ? (
+                    currentUser.name.trim().charAt(0).toUpperCase()
+                  ) : (
+                    <User className="w-4 h-4" />
+                  )}
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-earth-600 hidden sm:block pr-1" />
               </button>
@@ -231,7 +243,7 @@ export const Navbar: React.FC = () => {
                     className="w-full text-left px-3 py-2 text-xs font-medium text-earth-700 hover:bg-cream-100 rounded-lg flex items-center gap-2"
                   >
                     <User className="w-4 h-4 text-terracotta-500" />
-                    My Account & Orders
+                    My Account & Profile
                   </button>
                   <button
                     onClick={() => {

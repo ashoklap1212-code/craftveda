@@ -13,6 +13,9 @@ const otpSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    otpCode: {
+      type: String,
+    },
     attempts: {
       type: Number,
       default: 0,
@@ -28,7 +31,7 @@ const otpSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       required: true,
-      index: { expires: 0 }, // Automatic TTL expiration index
+      index: { expires: 0 },
     },
   },
   {

@@ -3,7 +3,7 @@ import { useStore } from '../../context/StoreContext';
 import { ArrowUpRight, Sparkles } from 'lucide-react';
 
 export const CategoryGrid: React.FC = () => {
-  const { categories, setActiveCustomerPage, setSelectedCategoryFilter } = useStore();
+  const { categories, products, setActiveCustomerPage, setSelectedCategoryFilter } = useStore();
 
   const handleCategoryClick = (catId: string) => {
     setSelectedCategoryFilter(catId);
@@ -45,42 +45,52 @@ export const CategoryGrid: React.FC = () => {
 
         {/* Categories Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {categories.map((cat) => (
-            <div
-              key={cat.id}
-              onClick={() => handleCategoryClick(cat.id)}
-              className="group cursor-pointer rounded-3xl overflow-hidden bg-white border border-earth-200/80 shadow-sm hover:shadow-warm-hover transition-all duration-500 flex flex-col relative"
-            >
-              <div className="h-52 sm:h-60 overflow-hidden relative bg-cream-100">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-earth-950/85 via-earth-950/30 to-transparent opacity-85 group-hover:opacity-95 transition-opacity"></div>
-                
-                {/* Top Item Count Badge */}
-                <span className="absolute top-3.5 right-3.5 bg-white/95 backdrop-blur-md text-earth-900 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md">
-                  {cat.itemCount} Crafts
-                </span>
+          {categories.map((cat) => {
+            const count = products.filter(p => {
+              if (!p.category) return false;
+              const pCat = p.category.toLowerCase().trim();
+              const cId = cat.id.toLowerCase().trim();
+              const cName = cat.name.toLowerCase().trim();
+              return pCat === cId || pCat === cName || pCat.replace(/[^a-z0-9]/g, '') === cId.replace(/[^a-z0-9]/g, '');
+            }).length;
 
-                {/* Content Banner at Bottom */}
-                <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
-                  <h3 className="font-serif text-lg font-bold text-cream-50 group-hover:text-terracotta-300 transition-colors leading-tight">
-                    {cat.name}
-                  </h3>
-                  <p className="text-[11px] text-cream-200 line-clamp-2 leading-relaxed font-normal opacity-90">
-                    {cat.description}
-                  </p>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-terracotta-300 pt-1 group-hover:translate-x-1 transition-transform">
-                    <span>Shop Category</span> →
+            return (
+              <div
+                key={cat.id}
+                onClick={() => handleCategoryClick(cat.id)}
+                className="group cursor-pointer rounded-3xl overflow-hidden bg-white border border-earth-200/80 shadow-sm hover:shadow-warm-hover transition-all duration-500 flex flex-col relative"
+              >
+                <div className="h-52 sm:h-60 overflow-hidden relative bg-cream-100">
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-earth-950/85 via-earth-950/30 to-transparent opacity-85 group-hover:opacity-95 transition-opacity"></div>
+                  
+                  {/* Top Item Count Badge */}
+                  <span className="absolute top-3.5 right-3.5 bg-white/95 backdrop-blur-md text-earth-900 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-md">
+                    {count} Crafts
                   </span>
+
+                  {/* Content Banner at Bottom */}
+                  <div className="absolute bottom-4 left-4 right-4 text-white space-y-1">
+                    <h3 className="font-serif text-lg font-bold text-cream-50 group-hover:text-terracotta-300 transition-colors leading-tight">
+                      {cat.name}
+                    </h3>
+                    <p className="text-[11px] text-cream-200 line-clamp-2 leading-relaxed font-normal opacity-90">
+                      {cat.description}
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-terracotta-300 pt-1 group-hover:translate-x-1 transition-transform">
+                      <span>Shop Category</span> →
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

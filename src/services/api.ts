@@ -3,25 +3,13 @@
  * ---------------------------------------
  * Connects the React + Vite frontend to the Express + MongoDB Atlas backend at:
  * http://localhost:5000/api
+ *
+ * Uses HttpOnly session cookies (credentials: 'include') for secure authentication.
  */
 
-import { Product, Order, User } from '../types';
+import { Product, Order, User, Notification } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-
-// Helper to retrieve JWT token from localStorage
-export const getAuthToken = (): string | null => {
-  return localStorage.getItem('craftveda_token');
-};
-
-// Helper to set JWT token
-export const setAuthToken = (token: string | null): void => {
-  if (token) {
-    localStorage.setItem('craftveda_token', token);
-  } else {
-    localStorage.removeItem('craftveda_token');
-  }
-};
 
 // Helper to map Mongo `_id` to `id` for frontend compatibility
 function mapId<T extends { id?: string; _id?: string }>(item: T): T {
@@ -37,21 +25,17 @@ function mapIdArray<T extends { id?: string; _id?: string }>(items: T[]): T[] {
   return items.map(mapId);
 }
 
-// Generic HTTP Request Wrapper
+// Generic HTTP Request Wrapper with credentials: 'include' for HttpOnly Cookie support
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
-  const token = getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const res = await fetch(`${API_BASE_URL}${url}`, {
     ...options,
     headers,
+    credentials: 'include', // Include HttpOnly session cookie
   });
 
   if (!res.ok) {
@@ -107,19 +91,13 @@ export const apiService = {
   },
 
   async uploadProductImage(file: File): Promise<{ message: string; imageUrl: string; filename: string }> {
-    const token = getAuthToken();
     const formData = new FormData();
     formData.append('image', file);
 
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const res = await fetch(`${API_BASE_URL}/products/upload`, {
       method: 'POST',
-      headers,
       body: formData,
+      credentials: 'include',
     });
 
     if (!res.ok) {
@@ -135,68 +113,35 @@ export const apiService = {
     return data;
   },
 
-  // USER AUTHENTICATION ENDPOINTS
-  async sendOtp(email: string, phone?: string, name?: string): Promise<{ message: string; email: string; phone?: string; name?: string; expiresAfterSeconds: number }> {
-    return fetchJSON<{ message: string; email: string; phone?: string; name?: string; expiresAfterSeconds: number }>('/auth/send-otp', {
+  // USER AUTHENTICATION ENDPOINTS (PASSWORDLESS)
+  async sendOtp(email: string): Promise<{ message: string; email: string; expiresAfterSeconds: number }> {
+    return fetchJSON<{ message: string; email: string; expiresAfterSeconds: number }>('/auth/send-otp', {
       method: 'POST',
-      body: JSON.stringify({ email, phone, name }),
+      body: JSON.stringify({ email }),
     });
   },
 
-  async resendOtp(email: string, phone?: string, name?: string): Promise<{ message: string; email: string; phone?: string; name?: string; expiresAfterSeconds: number }> {
-    return fetchJSON<{ message: string; email: string; phone?: string; name?: string; expiresAfterSeconds: number }>('/auth/resend-otp', {
+  async resendOtp(email: string): Promise<{ message: string; email: string; expiresAfterSeconds: number }> {
+    return fetchJSON<{ message: string; email: string; expiresAfterSeconds: number }>('/auth/resend-otp', {
       method: 'POST',
-      body: JSON.stringify({ email, phone, name }),
+      body: JSON.stringify({ email }),
     });
   },
 
-  async verifyOtp(email: string, otp: string, phone?: string, name?: string): Promise<{ token: string; isNewUser: boolean; isProfileComplete: boolean; user: User }> {
-    const res = await fetchJSON<{ token: string; isNewUser: boolean; isProfileComplete: boolean; user: User }>('/auth/verify-otp', {
+  async verifyOtp(email: string, otp: string): Promise<{ isNewUser: boolean; isProfileComplete: boolean; user: User }> {
+    const res = await fetchJSON<{ isNewUser: boolean; isProfileComplete: boolean; user: User }>('/auth/verify-otp', {
       method: 'POST',
-      body: JSON.stringify({ email, otp, phone, name }),
+      body: JSON.stringify({ email, otp }),
     });
-    if (res.token) {
-      setAuthToken(res.token);
-    }
     return { ...res, user: mapId(res.user) };
   },
 
-  async getUsers(): Promise<User[]> {
-    const data = await fetchJSON<User[]>('/auth/users');
-    return mapIdArray(data);
-  },
-
-  async googleAuth(payload: { credential: string }): Promise<{ token: string; isNewUser: boolean; isProfileComplete: boolean; user: User }> {
-    const res = await fetchJSON<{ token: string; isNewUser: boolean; isProfileComplete: boolean; user: User }>('/auth/google', {
+  async googleAuth(payload: { credential: string }): Promise<{ isNewUser: boolean; isProfileComplete: boolean; user: User }> {
+    const res = await fetchJSON<{ isNewUser: boolean; isProfileComplete: boolean; user: User }>('/auth/google', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    if (res.token) {
-      setAuthToken(res.token);
-    }
     return { ...res, user: mapId(res.user) };
-  },
-
-  async registerUser(userData: { name: string; email: string; password?: string; phone?: string; avatar?: string; role?: string }): Promise<User & { token: string }> {
-    const res = await fetchJSON<User & { token: string }>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-    if (res.token) {
-      setAuthToken(res.token);
-    }
-    return { ...mapId(res), token: res.token };
-  },
-
-  async loginUser(credentials: { email: string; password?: string }): Promise<User & { token: string }> {
-    const res = await fetchJSON<User & { token: string }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-    if (res.token) {
-      setAuthToken(res.token);
-    }
-    return { ...mapId(res), token: res.token };
   },
 
   async getCurrentUser(): Promise<User> {
@@ -210,6 +155,43 @@ export const apiService = {
       body: JSON.stringify(profileData),
     });
     return mapId(data);
+  },
+
+  async logout(): Promise<{ message: string }> {
+    return fetchJSON<{ message: string }>('/auth/logout', {
+      method: 'POST',
+    });
+  },
+
+  async getUsers(): Promise<User[]> {
+    const data = await fetchJSON<User[]>('/auth/users');
+    return mapIdArray(data);
+  },
+
+  // NOTIFICATION ENDPOINTS
+  async getNotifications(): Promise<Notification[]> {
+    const data = await fetchJSON<Notification[]>('/notifications');
+    return mapIdArray(data);
+  },
+
+  async markNotificationRead(id: string): Promise<Notification> {
+    const data = await fetchJSON<Notification>(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+    return mapId(data);
+  },
+
+  async markAllNotificationsRead(): Promise<Notification[]> {
+    const data = await fetchJSON<Notification[]>('/notifications/read-all', {
+      method: 'PATCH',
+    });
+    return mapIdArray(data);
+  },
+
+  async deleteNotification(id: string): Promise<{ message: string; id: string }> {
+    return fetchJSON<{ message: string; id: string }>(`/notifications/${id}`, {
+      method: 'DELETE',
+    });
   },
 
   // ORDERS DATABASE ENDPOINTS
@@ -270,6 +252,180 @@ export const apiService = {
   }>> {
     return fetchJSON('/wishlist/admin');
   },
+
+  // ADMIN SPECIFIC AUTHENTICATION
+  async adminLogin(email: string, password: string): Promise<{ message: string; user: User }> {
+    const res = await fetchJSON<{ message: string; user: User }>('/auth/admin-login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    return { ...res, user: mapId(res.user) };
+  },
+
+  async getAdminMe(): Promise<User> {
+    const data = await fetchJSON<User>('/auth/admin-me');
+    return mapId(data);
+  },
+
+  // ADMIN USER MANAGEMENT ENDPOINTS (MAIN ADMIN CONTROL)
+  async getAdmins(): Promise<User[]> {
+    const data = await fetchJSON<User[]>('/auth/admins');
+    return mapIdArray(data);
+  },
+
+  async createAdmin(adminData: {
+    name?: string;
+    email: string;
+    password: string;
+    adminPermissions?: string[];
+    isActive?: boolean;
+  }): Promise<User> {
+    const data = await fetchJSON<User>('/auth/admins', {
+      method: 'POST',
+      body: JSON.stringify(adminData),
+    });
+    return mapId(data);
+  },
+
+  async updateAdmin(id: string, adminData: Partial<User & { password?: string }>): Promise<User> {
+    const data = await fetchJSON<User>(`/auth/admins/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(adminData),
+    });
+    return mapId(data);
+  },
+
+  async deleteAdmin(id: string): Promise<{ message: string; id: string }> {
+    return fetchJSON<{ message: string; id: string }>(`/auth/admins/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async toggleAdminActive(id: string): Promise<User> {
+    const data = await fetchJSON<User>(`/auth/admins/${id}/toggle-active`, {
+      method: 'PATCH',
+    });
+    return mapId(data);
+  },
+
+  // DISCOUNT COUPON MANAGEMENT ENDPOINTS
+  async getCoupons(): Promise<any[]> {
+    const data = await fetchJSON<any[]>('/coupons');
+    return mapIdArray(data);
+  },
+
+  async createCoupon(couponData: any): Promise<any> {
+    const data = await fetchJSON<any>('/coupons', {
+      method: 'POST',
+      body: JSON.stringify(couponData),
+    });
+    return mapId(data);
+  },
+
+  async updateCoupon(id: string, couponData: any): Promise<any> {
+    const data = await fetchJSON<any>(`/coupons/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(couponData),
+    });
+    return mapId(data);
+  },
+
+  async deleteCoupon(id: string): Promise<{ message: string; id: string }> {
+    return fetchJSON<{ message: string; id: string }>(`/coupons/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async validateCoupon(code: string, subtotal: number): Promise<{
+    valid: boolean;
+    code?: string;
+    discountType?: string;
+    discountValue?: number;
+    discountAmount: number;
+    message: string;
+  }> {
+    return fetchJSON('/coupons/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code, subtotal }),
+    });
+  },
+
+  // ORDER CHARGES ENDPOINTS (Admin-configurable)
+  async getOrderCharges(): Promise<{
+    id: string;
+    shippingFee: number;
+    packagingFee: number;
+    freeShippingThreshold: number;
+    safeFragileShippingLabel: string;
+    isFreeShippingEnabled: boolean;
+    updatedBy: string;
+  }> {
+    return fetchJSON('/order-charges');
+  },
+
+  async updateOrderCharges(data: {
+    shippingFee?: number;
+    packagingFee?: number;
+    freeShippingThreshold?: number;
+    safeFragileShippingLabel?: string;
+    isFreeShippingEnabled?: boolean;
+  }): Promise<{
+    id: string;
+    shippingFee: number;
+    packagingFee: number;
+    freeShippingThreshold: number;
+    safeFragileShippingLabel: string;
+    isFreeShippingEnabled: boolean;
+  }> {
+    return fetchJSON('/order-charges', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // CATEGORY ENDPOINTS (MongoDB-backed)
+  async getCategories(): Promise<any[]> {
+    return fetchJSON('/categories');
+  },
+
+  async createCategory(categoryData: { id: string; name: string; description: string; image: string }): Promise<any> {
+    return fetchJSON('/categories', {
+      method: 'POST',
+      body: JSON.stringify(categoryData),
+    });
+  },
+
+  async updateCategory(id: string, categoryData: { name?: string; description?: string; image?: string }): Promise<any> {
+    return fetchJSON(`/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(categoryData),
+    });
+  },
+
+  async deleteCategory(id: string): Promise<{ message: string; id: string }> {
+    return fetchJSON(`/categories/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async uploadCategoryImage(file: File): Promise<{ message: string; imageUrl: string; filename: string }> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const res = await fetch(`${API_BASE_URL}/categories/upload`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Category image upload failed' }));
+      throw new Error(err.message || `HTTP error ${res.status}`);
+    }
+
+    return res.json();
+  },
 };
 
 export const api = apiService;
+

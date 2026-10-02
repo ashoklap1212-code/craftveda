@@ -10,7 +10,7 @@ export const CartDrawer: React.FC = () => {
     cart, removeFromCart, updateCartQuantity, 
     cartSubtotal, cartDiscount, cartTotal,
     setActiveCustomerPage, currentUser, setIsAuthModalOpen,
-    showToast
+    showToast, orderCharges
   } = useStore();
 
   const [couponCode, setCouponCode] = useState('');
@@ -34,9 +34,10 @@ export const CartDrawer: React.FC = () => {
   };
 
   const finalCartTotal = Math.max(0, cartTotal - appliedDiscount);
-  const freeShippingThreshold = 1499;
+  const freeShippingThreshold = orderCharges.freeShippingThreshold;
   const amountNeededForFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
   const freeShippingPercent = Math.min(100, Math.round((cartSubtotal / freeShippingThreshold) * 100));
+  const shippingFeeDisplay = orderCharges.shippingFee + orderCharges.packagingFee;
 
   const handleProceedToCheckout = () => {
     if (cart.length === 0) return;
@@ -91,7 +92,7 @@ export const CartDrawer: React.FC = () => {
           {/* Free Shipping Progress Indicator */}
           {cart.length > 0 && (
             <div className="bg-terracotta-50/70 border-b border-terracotta-100 px-5 py-3 text-xs">
-              {amountNeededForFreeShipping > 0 ? (
+              {amountNeededForFreeShipping > 0 && orderCharges.isFreeShippingEnabled ? (
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-[11px] font-bold text-earth-800">
                     <span>Add ₹{amountNeededForFreeShipping.toLocaleString('en-IN')} more for FREE Express Shipping!</span>
@@ -237,9 +238,12 @@ export const CartDrawer: React.FC = () => {
                 </div>
                 
                 <div className="flex justify-between">
-                  <span>Shipping & Packaging</span>
+                  <span>{orderCharges.safeFragileShippingLabel}</span>
                   <span className="font-bold text-earth-900">
-                    {cartSubtotal > 1499 ? <span className="text-emerald-600 font-extrabold">FREE</span> : '₹99'}
+                    {(orderCharges.isFreeShippingEnabled && cartSubtotal >= orderCharges.freeShippingThreshold)
+                      ? <span className="text-emerald-600 font-extrabold">FREE</span>
+                      : `₹${shippingFeeDisplay}`
+                    }
                   </span>
                 </div>
                 

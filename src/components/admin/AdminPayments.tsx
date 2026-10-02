@@ -7,9 +7,15 @@ export const AdminPayments: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in text-earth-100">
-      <div>
-        <h2 className="font-serif text-2xl font-extrabold text-white">UPI Payment Transactions Log</h2>
-        <p className="text-xs text-earth-400">View real-time UPI transaction reference numbers, amounts, and settlement statuses</p>
+      {/* Header Panel */}
+      <div className="bg-earth-900 border border-earth-800 p-6 rounded-3xl">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="bg-terracotta-500/20 text-terracotta-400 border border-terracotta-500/30 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md">
+            Payments Log
+          </span>
+        </div>
+        <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-white">UPI Payment Transactions Log</h2>
+        <p className="text-xs text-earth-400 mt-1">View real-time UPI transaction reference numbers, amounts, and settlement statuses</p>
       </div>
 
       <div className="bg-earth-900 border border-earth-800 rounded-3xl overflow-hidden shadow-sm">

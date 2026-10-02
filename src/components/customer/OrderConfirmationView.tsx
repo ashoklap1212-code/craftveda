@@ -33,7 +33,7 @@ export const OrderConfirmationView: React.FC = () => {
 
         <div>
           <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-            Payment Received via {order.payment.paymentMethod}
+            {order.payment?.paymentMethod === 'COD' ? 'Cash on Delivery Selected' : `Payment Received via ${order.payment?.paymentMethod || 'UPI'}`}
           </span>
           <h1 className="font-serif text-3xl font-extrabold text-earth-900 mt-2">Order Confirmed!</h1>
           <p className="text-xs text-earth-500 mt-1">

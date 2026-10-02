@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { 
   X, Mail, User as UserIcon, Phone, MapPin, 
-  ArrowRight, CheckCircle2, AlertCircle, Sparkles, RefreshCw, Edit2, ShieldCheck
+  ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Edit2, ShieldCheck
 } from 'lucide-react';
 
 type AuthStep = 'email' | 'otp_verify' | 'personal_details';
@@ -11,7 +11,8 @@ export const AuthModal: React.FC = () => {
   const { 
     isAuthModalOpen, setIsAuthModalOpen, 
     sendOtp, verifyOtp, resendOtp, googleLogin,
-    updateUserProfile, addSavedAddress, currentUser 
+    updateUserProfile, addSavedAddress, currentUser,
+    setActiveCustomerPage
   } = useStore();
 
   const [step, setStep] = useState<AuthStep>('email');
@@ -30,6 +31,7 @@ export const AuthModal: React.FC = () => {
   // Personal Details Step State
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [profileImage, setProfileImage] = useState('');
   const [houseFlat, setHouseFlat] = useState('');
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
@@ -133,6 +135,7 @@ export const AuthModal: React.FC = () => {
     setResendCooldown(0);
     setName('');
     setPhone('');
+    setProfileImage('');
     setHouseFlat('');
     setStreet('');
     setCity('');
@@ -143,42 +146,31 @@ export const AuthModal: React.FC = () => {
   const handleClose = () => {
     setIsAuthModalOpen(false);
     resetForm();
+    setActiveCustomerPage('home');
   };
 
   const validateEmail = (val: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
   };
 
-  // HANDLER STEP 1: Submit Details for OTP
+  // STEP 1: Submit Email for OTP
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
-
-    if (!name.trim()) {
-      setErrorMsg('Please enter your full name');
-      return;
-    }
 
     if (!validateEmail(email)) {
       setErrorMsg('Please enter a valid email address');
       return;
     }
 
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setErrorMsg('Please enter a valid 10-digit mobile number');
-      return;
-    }
-
     try {
       setLoading(true);
-      const formattedPhone = `+91 ${cleanPhone.slice(-10)}`;
-      await sendOtp(email.trim().toLowerCase(), formattedPhone, name.trim());
+      const cleanEmail = email.trim().toLowerCase();
+      await sendOtp(cleanEmail);
       setStep('otp_verify');
       setResendCooldown(60);
-      setSuccessMsg(`Verification code sent to ${email.trim()} and ${formattedPhone}`);
-      // Focus first OTP box
+      setSuccessMsg(`Verification code sent to ${cleanEmail}`);
       setTimeout(() => {
         otpInputRefs.current[0]?.focus();
       }, 100);
@@ -189,7 +181,7 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  // HANDLER STEP 2: Handle OTP Digit Inputs
+  // STEP 2: Handle OTP Digit Inputs
   const handleDigitChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
 
@@ -198,7 +190,6 @@ export const AuthModal: React.FC = () => {
     setOtpDigits(newDigits);
     setErrorMsg('');
 
-    // Auto-advance to next input
     if (value && index < 5) {
       otpInputRefs.current[index + 1]?.focus();
     }
@@ -220,7 +211,7 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  // HANDLER STEP 2: Submit OTP for Verification
+  // STEP 2: Submit OTP for Verification
   const handleOtpVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMsg('');
@@ -234,22 +225,27 @@ export const AuthModal: React.FC = () => {
 
     try {
       setLoading(true);
-      const cleanPhone = phone.replace(/\D/g, '');
-      const formattedPhone = cleanPhone ? `+91 ${cleanPhone.slice(-10)}` : '';
-      const res = await verifyOtp(email.trim().toLowerCase(), fullOtp, formattedPhone, name.trim());
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await verifyOtp(cleanEmail, fullOtp);
 
       if (res && res.user) {
-        // Success & Close Modal (User logged in directly to CraftVeda)
-        handleClose();
+        if (!res.isProfileComplete || res.isNewUser) {
+          setName(res.user.name || '');
+          setPhone(res.user.phone || '');
+          setProfileImage(res.user.profileImage || '');
+          setStep('personal_details');
+        } else {
+          handleClose();
+        }
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Invalid or expired verification code. Please check and try again.');
+      setErrorMsg(err.message || 'Invalid or expired verification code. Please request a new OTP.');
     } finally {
       setLoading(false);
     }
   };
 
-  // HANDLER STEP 2: Resend OTP
+  // STEP 2: Resend OTP
   const handleResendOtp = async () => {
     if (resendCooldown > 0 || loading) return;
     setErrorMsg('');
@@ -257,12 +253,11 @@ export const AuthModal: React.FC = () => {
 
     try {
       setLoading(true);
-      const cleanPhone = phone.replace(/\D/g, '');
-      const formattedPhone = cleanPhone ? `+91 ${cleanPhone.slice(-10)}` : '';
-      await resendOtp(email.trim().toLowerCase(), formattedPhone, name.trim());
+      const cleanEmail = email.trim().toLowerCase();
+      await resendOtp(cleanEmail);
       setResendCooldown(60);
       setOtpDigits(['', '', '', '', '', '']);
-      setSuccessMsg(`A new 6-digit code has been sent to ${email.trim()}`);
+      setSuccessMsg(`A new 6-digit code has been sent to ${cleanEmail}`);
       otpInputRefs.current[0]?.focus();
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to resend OTP. Please try again.');
@@ -271,23 +266,7 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  // HANDLER GOOGLE SIGN-IN MANUAL TRIGGER
-  const handleGoogleAuth = () => {
-    setErrorMsg('');
-    setSuccessMsg('');
-    const google = (window as any).google;
-    if (google?.accounts?.id) {
-      google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.warn('Google OneTap prompt notice:', notification.getNotDisplayedReason());
-        }
-      });
-    } else {
-      setErrorMsg('Google Sign-In service is loading. Please try again.');
-    }
-  };
-
-  // HANDLER STEP 3: Save Personal Details
+  // STEP 3: Save Personal Details
   const handlePersonalDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -297,25 +276,19 @@ export const AuthModal: React.FC = () => {
       return;
     }
 
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone && cleanPhone.length < 10) {
-      setErrorMsg('Please enter a valid 10-digit mobile number');
-      return;
-    }
-
     try {
       setLoading(true);
-      const formattedPhone = cleanPhone ? `+91 ${cleanPhone.slice(-10)}` : '';
 
       await updateUserProfile({
         name: name.trim(),
-        phone: formattedPhone,
+        phone: phone.trim(),
+        profileImage: profileImage.trim(),
       });
 
       if (houseFlat && street && city && state && pincode) {
         addSavedAddress({
           fullName: name.trim(),
-          mobileNumber: formattedPhone || '+91 98765 43210',
+          mobileNumber: phone || '+91 98765 43210',
           email: currentUser?.email || email,
           houseFlat,
           street,
@@ -327,7 +300,7 @@ export const AuthModal: React.FC = () => {
         });
       }
 
-      setSuccessMsg('Profile setup completed successfully!');
+      setSuccessMsg('Profile completed successfully!');
       setTimeout(() => {
         handleClose();
       }, 800);
@@ -352,7 +325,7 @@ export const AuthModal: React.FC = () => {
           <X className="w-4 h-4" />
         </button>
 
-        {/* Clean Light-Themed Branding Header */}
+        {/* Clean Light-Themed Header */}
         <div className="bg-cream-50/80 p-6 border-b border-earth-100 relative">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-2xl bg-terracotta-500 text-white flex items-center justify-center text-xl shadow-warm">
@@ -372,20 +345,19 @@ export const AuthModal: React.FC = () => {
             <div className="mt-2">
               <h3 className="font-serif text-xl font-extrabold text-earth-900">Welcome to CraftVeda</h3>
               <p className="text-xs text-earth-600 mt-1 leading-relaxed">
-                Enter your details to receive a 6-digit verification code or sign in with Google.
+                Enter your email address for a 6-digit OTP code or continue with Google.
               </p>
             </div>
           )}
 
           {step === 'otp_verify' && (
             <div className="mt-2">
-              <h3 className="font-serif text-xl font-extrabold text-earth-900">Verify Your Account</h3>
+              <h3 className="font-serif text-xl font-extrabold text-earth-900">Verify Verification Code</h3>
               <p className="text-xs text-earth-600 mt-1 leading-relaxed">
-                We've sent a verification code to your email and mobile number.
+                We've sent a 6-digit verification code to:
               </p>
               <div className="flex items-center gap-2 text-xs text-earth-700 font-bold mt-2">
                 <span className="text-terracotta-600 underline font-mono">{email}</span>
-                {phone && <span className="text-earth-500 font-mono">({phone})</span>}
                 <button
                   type="button"
                   onClick={() => {
@@ -393,9 +365,9 @@ export const AuthModal: React.FC = () => {
                     setErrorMsg('');
                     setSuccessMsg('');
                   }}
-                  className="text-[10px] text-earth-500 hover:text-terracotta-600 flex items-center gap-0.5 ml-auto"
+                  className="text-[10px] text-earth-500 hover:text-terracotta-600 flex items-center gap-0.5 ml-auto font-medium"
                 >
-                  <Edit2 className="w-3 h-3" /> Edit Details
+                  <Edit2 className="w-3 h-3" /> Change Email
                 </button>
               </div>
             </div>
@@ -403,11 +375,11 @@ export const AuthModal: React.FC = () => {
 
           {step === 'personal_details' && (
             <div className="mt-2">
-              <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full mb-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Account Verified
+              <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Email Verified
               </span>
               <h3 className="font-serif text-lg font-bold text-earth-900">Personal Details</h3>
-              <p className="text-xs text-earth-600">Help us customize your craft order delivery experience</p>
+              <p className="text-xs text-earth-600">Complete your profile details for an authentic craft shopping experience</p>
             </div>
           )}
         </div>
@@ -430,27 +402,9 @@ export const AuthModal: React.FC = () => {
             </div>
           )}
 
-          {/* STEP 1: MAIN LOGIN PAGE */}
+          {/* STEP 1: EMAIL LOGIN PAGE */}
           {step === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-earth-800 mb-1">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Enter your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    autoFocus
-                    className="w-full bg-cream-50/50 border border-earth-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 focus:bg-white outline-none transition-all placeholder:text-earth-400"
-                  />
-                  <UserIcon className="w-4 h-4 text-earth-400 absolute left-3.5 top-3" />
-                </div>
-              </div>
-
               <div>
                 <label className="block text-xs font-bold text-earth-800 mb-1">
                   Email Address
@@ -458,30 +412,14 @@ export const AuthModal: React.FC = () => {
                 <div className="relative">
                   <input
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Enter your email (e.g. user@example.com)"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full bg-cream-50/50 border border-earth-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 focus:bg-white outline-none transition-all placeholder:text-earth-400"
+                    autoFocus
+                    className="w-full bg-cream-50/50 border border-earth-200 rounded-2xl pl-10 pr-4 py-3 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 focus:bg-white outline-none transition-all placeholder:text-earth-400 font-medium"
                   />
-                  <Mail className="w-4 h-4 text-earth-400 absolute left-3.5 top-3" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-earth-800 mb-1">
-                  Mobile Number
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    placeholder="Enter your mobile number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                    className="w-full bg-cream-50/50 border border-earth-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 focus:bg-white outline-none transition-all placeholder:text-earth-400"
-                  />
-                  <Phone className="w-4 h-4 text-earth-400 absolute left-3.5 top-3" />
+                  <Mail className="w-4 h-4 text-earth-400 absolute left-3.5 top-3.5" />
                 </div>
               </div>
 
@@ -513,7 +451,7 @@ export const AuthModal: React.FC = () => {
               {/* Single Continue with Google Button */}
               <div id="googleSignInBtnContainer" className="w-full flex justify-center min-h-[44px]"></div>
 
-              {/* Terms and Privacy Text */}
+              {/* Terms Text */}
               <p className="text-[10px] text-earth-500 text-center leading-relaxed pt-1">
                 By continuing, you agree to CraftVeda's{' '}
                 <span className="text-terracotta-600 font-medium underline cursor-pointer">Terms of Use</span> and{' '}
@@ -562,17 +500,28 @@ export const AuthModal: React.FC = () => {
                   </span>
                 ) : (
                   <>
-                    <span>Verify OTP</span>
+                    <span>Verify Code</span>
                     <ShieldCheck className="w-4 h-4" />
                   </>
                 )}
               </button>
 
-              {/* Resend OTP */}
-              <div className="text-center pt-2 border-t border-earth-100 text-xs text-earth-600">
-                <span>Didn't receive the code? </span>
+              {/* Resend OTP & Change Email */}
+              <div className="flex items-center justify-between pt-2 border-t border-earth-100 text-xs text-earth-600">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('email');
+                    setErrorMsg('');
+                    setSuccessMsg('');
+                  }}
+                  className="text-earth-500 hover:text-earth-800 font-medium text-xs flex items-center gap-1"
+                >
+                  <Edit2 className="w-3 h-3" /> Change Email
+                </button>
+
                 {resendCooldown > 0 ? (
-                  <span className="text-earth-400 font-medium font-mono font-bold">
+                  <span className="text-earth-400 font-mono font-bold text-xs">
                     Resend OTP in {resendCooldown}s
                   </span>
                 ) : (
@@ -589,7 +538,7 @@ export const AuthModal: React.FC = () => {
             </form>
           )}
 
-          {/* STEP 3: PERSONAL DETAILS PAGE (POST-VERIFICATION) */}
+          {/* STEP 3: PERSONAL DETAILS PAGE (FOR NEW/INCOMPLETE USERS) */}
           {step === 'personal_details' && (
             <form onSubmit={handlePersonalDetailsSubmit} className="space-y-4">
               <div>
@@ -599,7 +548,7 @@ export const AuthModal: React.FC = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="e.g. Aarav Sharma"
+                    placeholder="Enter your full name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -627,7 +576,7 @@ export const AuthModal: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-earth-800 mb-1">
-                  Phone Number <span className="text-earth-400 font-normal">(Optional, for order delivery updates)</span>
+                  Phone Number <span className="text-earth-400 font-normal">(Optional)</span>
                 </label>
                 <div className="flex gap-2">
                   <span className="bg-earth-100 border border-earth-200 rounded-2xl px-3 py-2.5 text-xs font-bold text-earth-700 flex items-center">
@@ -694,7 +643,7 @@ export const AuthModal: React.FC = () => {
                   disabled={loading}
                   className="flex-1 bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-3.5 rounded-2xl text-xs transition-colors flex items-center justify-center gap-2 shadow-warm"
                 >
-                  {loading ? 'Saving Profile...' : 'Save Profile & Continue'}
+                  {loading ? 'Saving Details...' : 'Save Details & Continue'}
                 </button>
                 <button
                   type="button"
