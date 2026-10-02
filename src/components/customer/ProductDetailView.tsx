@@ -1,35 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { ProductCard } from './ProductCard';
-import { 
-  Star, ShoppingBag, Heart, ShieldCheck, Truck, RefreshCw, 
-  CheckCircle2, ArrowLeft, MessageSquare, ThumbsUp, Send
+import { Review } from '../../types';
+import { apiService } from '../../services/api';
+import {
+  Star, ShoppingBag, Heart, ShieldCheck, Truck, RefreshCw,
+  CheckCircle2, ArrowLeft, Send, Loader2, AlertCircle
 } from 'lucide-react';
 
 export const ProductDetailView: React.FC = () => {
-  const { 
-    selectedProductId, products, reviews, addToCart, toggleWishlist, isInWishlist,
-    setActiveCustomerPage, addReview, currentUser, setIsAuthModalOpen, showToast 
+  const {
+    selectedProductId, products, addToCart, toggleWishlist, isInWishlist,
+    setActiveCustomerPage, currentUser, setIsAuthModalOpen, showToast
   } = useStore();
 
   const product = products.find(p => p.id === selectedProductId) || products[0];
-  const [selectedImage, setSelectedImage] = useState(product.images[0] || '');
+  const [selectedImage, setSelectedImage] = useState(product?.images[0] || '');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'specs' | 'care' | 'reviews'>('specs');
 
-  // New review state
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
+
+  // New review form state
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  // Fetch reviews for the current product
+  const fetchReviews = useCallback(async () => {
+    if (!product?.id) return;
+    setReviewsLoading(true);
+    setReviewsError('');
+    try {
+      const data = await apiService.getProductReviews(product.id);
+      setReviews(data.reviews || []);
+      setTotalReviews(data.totalReviews ?? 0);
+      setAverageRating(data.averageRating ?? 0);
+    } catch (err: any) {
+      setReviewsError('Failed to load reviews. Please try again.');
+      console.error('❌ Failed to fetch reviews:', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [product?.id]);
+
+  // Fetch reviews when the reviews tab is opened or product changes
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      fetchReviews();
+    }
+  }, [activeTab, fetchReviews]);
 
   if (!product) return null;
 
   const inWish = isInWishlist(product.id);
-  const prodReviews = reviews.filter(r => r.productId === product.id);
-  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const relatedProducts = products
+    .filter(p => p.category === product.category && p.id !== product.id)
+    .slice(0, 4);
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    setSubmitError('');
 
     if (!currentUser) {
       setIsAuthModalOpen(true);
@@ -37,16 +75,43 @@ export const ProductDetailView: React.FC = () => {
       return;
     }
 
-    addReview({
-      productId: product.id,
-      userName: currentUser.name,
-      userAvatar: currentUser.avatar,
-      rating: newRating,
-      comment: newComment,
-      verifiedPurchase: true,
-    });
+    if (!newComment.trim() || newComment.trim().length < 3) {
+      setSubmitError('Please write at least a few words in your review.');
+      return;
+    }
 
-    setNewComment('');
+    if (newRating < 1 || newRating > 5) {
+      setSubmitError('Please select a rating between 1 and 5 stars.');
+      return;
+    }
+
+    try {
+      setSubmitLoading(true);
+      await apiService.submitReview({
+        productId: product.id,
+        rating: newRating,
+        comment: newComment.trim(),
+      });
+
+      setNewComment('');
+      setNewRating(5);
+      setSubmitSuccess(true);
+      showToast('Thank you! Your review has been published. 🙏', 'success');
+
+      // Refresh reviews list so the new review appears immediately
+      await fetchReviews();
+
+      setTimeout(() => setSubmitSuccess(false), 4000);
+    } catch (err: any) {
+      const msg = err.message || 'Failed to submit review. Please try again.';
+      setSubmitError(msg);
+      // Don't show toast for expected duplicate errors
+      if (!msg.toLowerCase().includes('already')) {
+        showToast(msg, 'error');
+      }
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   return (
@@ -235,7 +300,7 @@ export const ProductDetailView: React.FC = () => {
               activeTab === 'reviews' ? 'text-terracotta-600 border-b-2 border-terracotta-500' : 'text-earth-500 hover:text-earth-800'
             }`}
           >
-            Customer Reviews ({prodReviews.length})
+            Customer Reviews ({totalReviews || product.reviewCount})
           </button>
         </div>
 
@@ -286,13 +351,46 @@ export const ProductDetailView: React.FC = () => {
         {/* TAB 3: Reviews & Review Form */}
         {activeTab === 'reviews' && (
           <div className="space-y-8">
+            {/* Rating Summary Bar */}
+            {totalReviews > 0 && (
+              <div className="flex items-center gap-4 p-4 bg-cream-50 rounded-2xl border border-earth-100">
+                <div className="text-center">
+                  <p className="font-serif font-extrabold text-4xl text-earth-900">{averageRating.toFixed(1)}</p>
+                  <div className="flex text-amber-500 mt-1 justify-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`w-4 h-4 ${i < Math.round(averageRating) ? 'fill-amber-400' : 'text-earth-300'}`} />
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-earth-500 mt-1">{totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            )}
+
             {/* Reviews List */}
             <div className="space-y-4">
-              {prodReviews.length === 0 ? (
-                <p className="text-xs text-earth-500 text-center py-6">No reviews yet for this product. Be the first to write one!</p>
+              {reviewsLoading ? (
+                <div className="flex items-center justify-center py-10 text-earth-500 gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-xs">Loading reviews...</span>
+                </div>
+              ) : reviewsError ? (
+                <div className="flex items-center gap-2 text-rose-600 bg-rose-50 p-4 rounded-xl border border-rose-200">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span className="text-xs">{reviewsError}</span>
+                  <button
+                    onClick={fetchReviews}
+                    className="ml-auto text-xs font-bold underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : reviews.length === 0 ? (
+                <p className="text-xs text-earth-500 text-center py-6">
+                  No reviews yet for this product. Be the first to write one!
+                </p>
               ) : (
-                prodReviews.map((rev) => (
-                  <div key={rev.id} className="bg-cream-50 p-4 rounded-2xl border border-earth-100 space-y-2">
+                reviews.map((rev) => (
+                  <div key={rev.id || rev._id} className="bg-cream-50 p-4 rounded-2xl border border-earth-100 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-earth-900">{rev.userName}</span>
@@ -320,7 +418,21 @@ export const ProductDetailView: React.FC = () => {
             {/* Submit Review Form */}
             <form onSubmit={handleReviewSubmit} className="bg-cream-100 p-6 rounded-2xl border border-earth-200 space-y-4">
               <h4 className="font-serif font-bold text-base text-earth-900">Write a Customer Review</h4>
-              
+
+              {submitSuccess && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>Your review has been published successfully! Thank you. 🙏</span>
+                </div>
+              )}
+
+              {submitError && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{submitError}</span>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-earth-700 mb-1">Your Rating</label>
                 <div className="flex gap-2">
@@ -351,10 +463,15 @@ export const ProductDetailView: React.FC = () => {
 
               <button
                 type="submit"
-                className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-warm transition-colors"
+                disabled={submitLoading}
+                className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-warm transition-colors disabled:opacity-60"
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>Submit Review</span>
+                {submitLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
+                <span>{submitLoading ? 'Submitting...' : 'Submit Review'}</span>
               </button>
             </form>
           </div>

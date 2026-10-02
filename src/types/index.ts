@@ -11,13 +11,35 @@ export type CategoryId =
 
 export interface Review {
   id: string;
+  _id?: string;
   productId: string;
+  userId?: string;
   userName: string;
   userAvatar?: string;
   rating: number; // 1 to 5
   date: string;
   comment: string;
   verifiedPurchase: boolean;
+  isHidden?: boolean;
+  createdAt?: string;
+}
+
+export interface AdminReview {
+  id: string;
+  _id?: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  userId: string;
+  customerName: string;
+  customerEmail: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  verifiedPurchase: boolean;
+  isHidden: boolean;
+  date: string;
+  createdAt?: string;
 }
 
 export interface Product {

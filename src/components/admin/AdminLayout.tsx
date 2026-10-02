@@ -11,9 +11,10 @@ import { AdminWishlist } from './AdminWishlist';
 import { AdminCoupons } from './AdminCoupons';
 import { AdminManager } from './AdminManager';
 import { AdminOrderCharges } from './AdminOrderCharges';
+import { AdminReviews } from './AdminReviews';
 import { 
   LayoutDashboard, Package, Warehouse, ShoppingCart, Users, CreditCard, 
-  Layers, Store, Bell, Search, LogOut, Sparkles, ShieldAlert, Heart, Tag, ShieldCheck, Truck
+  Layers, Store, Bell, Search, LogOut, Sparkles, ShieldAlert, Heart, Tag, ShieldCheck, Truck, MessageSquare
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -27,7 +28,7 @@ export const AdminLayout: React.FC = () => {
 
   const isMainAdmin = Boolean(currentUser?.isMainAdmin);
   const permissions = currentUser?.adminPermissions || [
-    'dashboard', 'orders', 'products', 'inventory', 'users', 'payments', 'categories', 'wishlist', 'coupons', 'order-charges', 'admins'
+    'dashboard', 'orders', 'products', 'inventory', 'users', 'payments', 'categories', 'wishlist', 'coupons', 'order-charges', 'admins', 'reviews'
   ];
 
   const hasPermission = (tab: AdminTab): boolean => {
@@ -208,6 +209,20 @@ export const AdminLayout: React.FC = () => {
               </button>
             )}
 
+            {hasPermission('reviews') && (
+              <button
+                onClick={() => setActiveAdminTab('reviews')}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all ${
+                  activeAdminTab === 'reviews' ? 'bg-terracotta-500 text-white shadow-sm font-bold' : 'text-earth-300 hover:bg-earth-800 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Customer Reviews</span>
+                </div>
+              </button>
+            )}
+
             {hasPermission('order-charges') && (
               <button
                 onClick={() => setActiveAdminTab('order-charges')}
@@ -297,6 +312,7 @@ export const AdminLayout: React.FC = () => {
               {activeAdminTab === 'coupons' && <AdminCoupons />}
               {activeAdminTab === 'order-charges' && <AdminOrderCharges />}
               {activeAdminTab === 'admins' && <AdminManager />}
+              {activeAdminTab === 'reviews' && <AdminReviews />}
             </>
           )}
         </main>

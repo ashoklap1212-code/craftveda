@@ -1,11 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  Product, Category, Review, CartItem, Order, User, Notification, 
+  Product, Category, CartItem, Order, User, Notification, 
   OrderStatus, ShippingAddress, OrderCharges
 } from '../types';
-import { 
-  INITIAL_REVIEWS 
-} from '../data/initialData';
+
 
 import { apiService } from '../services/api';
 
@@ -34,7 +32,8 @@ export type AdminTab =
   | 'wishlist'
   | 'coupons'
   | 'order-charges'
-  | 'admins';
+  | 'admins'
+  | 'reviews';
 
 interface ToastState {
   message: string;
@@ -87,7 +86,6 @@ interface StoreContextType {
   // Products & Categories
   products: Product[];
   categories: Category[];
-  reviews: Review[];
   addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<void>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -95,7 +93,6 @@ interface StoreContextType {
   addCategory: (category: Omit<Category, 'itemCount'>) => Promise<void>;
   updateCategory: (category: Category) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
-  addReview: (review: Omit<Review, 'id' | 'date'>) => void;
   fetchCategories: () => Promise<void>;
 
   // Order Charges (Admin-managed)
@@ -142,7 +139,6 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
   const [orders, setOrders] = useState<Order[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -644,31 +640,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const addReview = (reviewData: Omit<Review, 'id' | 'date'>) => {
-    const newReview: Review = {
-      ...reviewData,
-      id: `rev-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-    };
-    setReviews(prev => [newReview, ...prev]);
-
-    const prodReviews = [...reviews.filter(r => r.productId === reviewData.productId), newReview];
-    const avgRating = Number((prodReviews.reduce((sum, r) => sum + r.rating, 0) / prodReviews.length).toFixed(1));
-
-    setProducts(prev => prev.map(p => {
-      if (p.id === reviewData.productId) {
-        return {
-          ...p,
-          rating: avgRating,
-          reviewCount: prodReviews.length,
-        };
-      }
-      return p;
-    }));
-
-    showToast('Thank you! Your review has been published.', 'success');
-  };
-
   // Authenticated Order Creation
   const createOrder = async (
     address: ShippingAddress, 
@@ -827,7 +798,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         products,
         categories,
-        reviews,
         addProduct,
         updateProduct,
         deleteProduct,
@@ -835,7 +805,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addCategory,
         updateCategory,
         deleteCategory,
-        addReview,
         fetchCategories,
 
         orderCharges,

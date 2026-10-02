@@ -7,7 +7,7 @@
  * Uses HttpOnly session cookies (credentials: 'include') for secure authentication.
  */
 
-import { Product, Order, User, Notification } from '../types';
+import { Product, Order, User, Notification, Review, AdminReview } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
@@ -424,6 +424,64 @@ export const apiService = {
     }
 
     return res.json();
+  },
+
+  // ─── CUSTOMER REVIEW ENDPOINTS ─────────────────────────────────────────────
+
+  /**
+   * Fetch reviews for a specific product (public – no auth required).
+   * Returns { reviews, totalReviews, averageRating }
+   */
+  async getProductReviews(productId: string): Promise<{
+    reviews: Review[];
+    totalReviews: number;
+    averageRating: number;
+  }> {
+    return fetchJSON(`/reviews/product/${productId}`);
+  },
+
+  /**
+   * Submit a new review for a product (requires authentication).
+   */
+  async submitReview(payload: {
+    productId: string;
+    rating: number;
+    comment: string;
+  }): Promise<Review> {
+    return fetchJSON<Review>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // ─── ADMIN REVIEW MANAGEMENT ENDPOINTS ─────────────────────────────────────
+
+  /**
+   * Get all reviews including hidden ones (admin only).
+   */
+  async getAdminReviews(): Promise<AdminReview[]> {
+    return fetchJSON<AdminReview[]>('/reviews/admin');
+  },
+
+  /**
+   * Hide an inappropriate review (admin only – soft delete).
+   */
+  async hideReview(id: string): Promise<{ message: string; id: string }> {
+    return fetchJSON(`/reviews/${id}/hide`, { method: 'PATCH' });
+  },
+
+  /**
+   * Restore a previously hidden review (admin only).
+   */
+  async unhideReview(id: string): Promise<{ message: string; id: string }> {
+    return fetchJSON(`/reviews/${id}/unhide`, { method: 'PATCH' });
+  },
+
+  /**
+   * Permanently delete a review (admin only).
+   */
+  async deleteReview(id: string): Promise<{ message: string; id: string }> {
+    return fetchJSON(`/reviews/${id}`, { method: 'DELETE' });
   },
 };
 
