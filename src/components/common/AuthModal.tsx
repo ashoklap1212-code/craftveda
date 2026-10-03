@@ -314,21 +314,21 @@ export const AuthModal: React.FC = () => {
   if (!isAuthModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-950/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-warm-hover border border-earth-100 max-w-md w-full my-8 overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-earth-950/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-warm-hover border border-earth-100 max-w-md w-full my-auto overflow-hidden relative">
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute right-4 top-4 text-earth-400 hover:text-earth-700 bg-cream-50 hover:bg-cream-100 p-2 rounded-full border border-earth-200 z-10 transition-colors"
+          className="absolute right-3 top-3 sm:right-4 sm:top-4 text-earth-400 hover:text-earth-700 bg-cream-50 hover:bg-cream-100 p-2 rounded-full border border-earth-200 z-10 transition-colors"
           title="Close Modal"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Clean Light-Themed Header */}
-        <div className="bg-cream-50/80 p-6 border-b border-earth-100 relative">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-2xl bg-terracotta-500 text-white flex items-center justify-center text-xl shadow-warm">
+        <div className="bg-cream-50/80 p-4 sm:p-6 border-b border-earth-100 relative">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-2">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-terracotta-500 text-white flex items-center justify-center text-lg sm:text-xl shadow-warm">
               🏺
             </div>
             <div>
@@ -385,7 +385,7 @@ export const AuthModal: React.FC = () => {
         </div>
 
         {/* Modal Form Body */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-3.5 sm:space-y-4">
           {/* Error Alert */}
           {errorMsg && (
             <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-2xl text-xs flex items-start gap-2.5 animate-fade-in">
@@ -469,7 +469,7 @@ export const AuthModal: React.FC = () => {
                 </label>
 
                 {/* 6 Individual Digit Inputs */}
-                <div className="flex items-center justify-between gap-2 max-w-xs mx-auto" onPaste={handlePaste}>
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2 max-w-xs mx-auto" onPaste={handlePaste}>
                   {otpDigits.map((digit, idx) => (
                     <input
                       key={idx}
@@ -482,7 +482,7 @@ export const AuthModal: React.FC = () => {
                       value={digit}
                       onChange={(e) => handleDigitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(idx, e)}
-                      className="w-11 h-13 bg-cream-50/70 border-2 border-earth-200 rounded-2xl text-center text-lg font-bold text-earth-900 focus:border-terracotta-500 focus:bg-white focus:ring-2 focus:ring-terracotta-200 outline-none transition-all font-mono"
+                      className="w-9 h-11 sm:w-11 sm:h-13 bg-cream-50/70 border-2 border-earth-200 rounded-xl sm:rounded-2xl text-center text-base sm:text-lg font-bold text-earth-900 focus:border-terracotta-500 focus:bg-white focus:ring-2 focus:ring-terracotta-200 outline-none transition-all font-mono"
                     />
                   ))}
                 </div>

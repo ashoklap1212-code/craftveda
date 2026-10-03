@@ -44,30 +44,30 @@ export const OrderTrackingView: React.FC = () => {
   const currentStepIndex = getStepIndex(activeOrder.currentStatus);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl space-y-8 animate-fade-in">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-4xl space-y-5 sm:space-y-8 animate-fade-in">
       {/* Header & Order Lookup Form */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-earth-200">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-earth-200">
         <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-terracotta-600">
+          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-terracotta-600">
             Real-Time Logistics
           </span>
-          <h1 className="font-serif text-3xl font-extrabold text-earth-900 mt-0.5">
-            Order Status & Live Tracking
+          <h1 className="font-serif text-xl sm:text-3xl font-extrabold text-earth-900 mt-0.5">
+            Order Status &amp; Live Tracking
           </h1>
         </div>
 
         {/* Quick Search */}
-        <form onSubmit={handleSearchOrder} className="flex gap-2">
+        <form onSubmit={handleSearchOrder} className="flex gap-2 w-full md:w-auto">
           <input
             type="text"
             placeholder="Enter Order ID (e.g. CV-2026-8921)"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="bg-white border border-earth-200 rounded-full px-4 py-2 text-xs font-medium text-earth-800 focus:ring-2 focus:ring-terracotta-500 outline-none w-64"
+            className="flex-1 md:w-64 bg-white border border-earth-200 rounded-full px-4 py-2 text-xs font-medium text-earth-800 focus:ring-2 focus:ring-terracotta-500 outline-none"
           />
           <button
             type="submit"
-            className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-4 py-2 rounded-full text-xs flex items-center gap-1 shadow-sm"
+            className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-4 py-2 rounded-full text-xs flex items-center gap-1 shadow-sm shrink-0"
           >
             <Search className="w-3.5 h-3.5" />
             <span>Track</span>

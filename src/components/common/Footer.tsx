@@ -15,35 +15,35 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="bg-earth-900 text-cream-100 pt-16 pb-8 border-t-4 border-terracotta-500 mt-20">
+    <footer className="bg-earth-900 text-cream-100 pt-10 sm:pt-16 pb-6 sm:pb-8 border-t-4 border-terracotta-500 mt-10 sm:mt-20">
       {/* Trust Highlights Bar */}
-      <div className="container mx-auto px-4 pb-12 border-b border-earth-700">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div className="flex flex-col items-center p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
-            <ShieldCheck className="w-8 h-8 text-terracotta-400 mb-2" />
-            <h4 className="font-serif font-bold text-sm text-cream-50">100% Authentic Handcraft</h4>
-            <p className="text-xs text-earth-300 mt-1">Sourced directly from rural Indian artisan cooperatives</p>
+      <div className="container mx-auto px-4 pb-8 sm:pb-12 border-b border-earth-700">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
+          <div className="flex flex-col items-center p-3 sm:p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
+            <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-terracotta-400 mb-1.5 sm:mb-2" />
+            <h4 className="font-serif font-bold text-xs sm:text-sm text-cream-50">100% Authentic</h4>
+            <p className="text-[10px] sm:text-xs text-earth-300 mt-0.5 sm:mt-1 line-clamp-2">Direct from artisan cooperatives</p>
           </div>
-          <div className="flex flex-col items-center p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
-            <Truck className="w-8 h-8 text-terracotta-400 mb-2" />
-            <h4 className="font-serif font-bold text-sm text-cream-50">Safe Transit Packaging</h4>
-            <p className="text-xs text-earth-300 mt-1">Triple-layer shock absorbent honeycomb cushioning</p>
+          <div className="flex flex-col items-center p-3 sm:p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
+            <Truck className="w-6 h-6 sm:w-8 sm:h-8 text-terracotta-400 mb-1.5 sm:mb-2" />
+            <h4 className="font-serif font-bold text-xs sm:text-sm text-cream-50">Safe Transit</h4>
+            <p className="text-[10px] sm:text-xs text-earth-300 mt-0.5 sm:mt-1 line-clamp-2">Triple-layer shock cushioning</p>
           </div>
-          <div className="flex flex-col items-center p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
-            <RefreshCw className="w-8 h-8 text-terracotta-400 mb-2" />
-            <h4 className="font-serif font-bold text-sm text-cream-50">7-Day Easy Replacement</h4>
-            <p className="text-xs text-earth-300 mt-1">Hassle-free replacement for any transit damage</p>
+          <div className="flex flex-col items-center p-3 sm:p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
+            <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 text-terracotta-400 mb-1.5 sm:mb-2" />
+            <h4 className="font-serif font-bold text-xs sm:text-sm text-cream-50">7-Day Replace</h4>
+            <p className="text-[10px] sm:text-xs text-earth-300 mt-0.5 sm:mt-1 line-clamp-2">Instant transit damage cover</p>
           </div>
-          <div className="flex flex-col items-center p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
-            <Award className="w-8 h-8 text-terracotta-400 mb-2" />
-            <h4 className="font-serif font-bold text-sm text-cream-50">Secure UPI & Cards</h4>
-            <p className="text-xs text-earth-300 mt-1">Encrypted checkout via Razorpay & UPI Gateway</p>
+          <div className="flex flex-col items-center p-3 sm:p-4 rounded-2xl bg-earth-800/60 border border-earth-700/50">
+            <Award className="w-6 h-6 sm:w-8 sm:h-8 text-terracotta-400 mb-1.5 sm:mb-2" />
+            <h4 className="font-serif font-bold text-xs sm:text-sm text-cream-50">Secure UPI &amp; Cards</h4>
+            <p className="text-[10px] sm:text-xs text-earth-300 mt-0.5 sm:mt-1 line-clamp-2">256-bit encrypted checkout</p>
           </div>
         </div>
       </div>
 
       {/* Main Footer Links */}
-      <div className="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="container mx-auto px-4 py-8 sm:py-12 grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8">
         {/* Brand Column */}
         <div className="space-y-4">
           <div className="flex items-center gap-2.5">

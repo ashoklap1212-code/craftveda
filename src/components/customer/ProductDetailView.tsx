@@ -115,7 +115,7 @@ export const ProductDetailView: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl space-y-12">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl space-y-6 sm:space-y-12">
       {/* Back Button */}
       <button
         onClick={() => {
@@ -128,17 +128,17 @@ export const ProductDetailView: React.FC = () => {
       </button>
 
       {/* Main Product Info Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
         {/* Left Column: Image Gallery */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-cream-100 rounded-3xl p-6 border border-earth-200 shadow-sm flex items-center justify-center relative overflow-hidden h-80 sm:h-96">
+        <div className="lg:col-span-6 space-y-3 sm:space-y-4">
+          <div className="bg-cream-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-earth-200 shadow-sm flex items-center justify-center relative overflow-hidden h-64 sm:h-96">
             <img
               src={selectedImage || product.images[0]}
               alt={product.name}
               className="max-h-full w-auto object-contain shadow-warm rounded-xl"
             />
             {product.discountPercentage > 0 && (
-              <span className="absolute top-4 left-4 bg-terracotta-500 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">
+              <span className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-terracotta-500 text-white text-[10px] sm:text-xs font-extrabold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-sm">
                 {product.discountPercentage}% OFF
               </span>
             )}
@@ -146,12 +146,12 @@ export const ProductDetailView: React.FC = () => {
 
           {/* Thumbnail Gallery */}
           {product.images.length > 1 && (
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1">
               {product.images.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(img)}
-                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 bg-cream-100 p-1 transition-all ${
+                  className={`w-14 h-14 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 bg-cream-100 p-0.5 sm:p-1 transition-all shrink-0 ${
                     (selectedImage || product.images[0]) === img ? 'border-terracotta-500 shadow-sm' : 'border-earth-200'
                   }`}
                 >
@@ -276,11 +276,11 @@ export const ProductDetailView: React.FC = () => {
       </div>
 
       {/* Tabs Section: Specs, Care Instructions, Reviews */}
-      <div className="bg-white rounded-3xl border border-earth-200 p-6 sm:p-8 space-y-6 shadow-sm">
-        <div className="flex border-b border-earth-200 gap-6 text-sm font-bold">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-earth-200 p-4 sm:p-8 space-y-4 sm:space-y-6 shadow-sm">
+        <div className="flex border-b border-earth-200 gap-4 sm:gap-6 text-xs sm:text-sm font-bold overflow-x-auto pb-0.5">
           <button
             onClick={() => setActiveTab('specs')}
-            className={`pb-3 transition-all ${
+            className={`pb-3 whitespace-nowrap transition-all ${
               activeTab === 'specs' ? 'text-terracotta-600 border-b-2 border-terracotta-500' : 'text-earth-500 hover:text-earth-800'
             }`}
           >
@@ -288,19 +288,19 @@ export const ProductDetailView: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('care')}
-            className={`pb-3 transition-all ${
+            className={`pb-3 whitespace-nowrap transition-all ${
               activeTab === 'care' ? 'text-terracotta-600 border-b-2 border-terracotta-500' : 'text-earth-500 hover:text-earth-800'
             }`}
           >
-            Usage & Care Guide
+            Usage &amp; Care
           </button>
           <button
             onClick={() => setActiveTab('reviews')}
-            className={`pb-3 transition-all flex items-center gap-1.5 ${
+            className={`pb-3 whitespace-nowrap transition-all flex items-center gap-1.5 ${
               activeTab === 'reviews' ? 'text-terracotta-600 border-b-2 border-terracotta-500' : 'text-earth-500 hover:text-earth-800'
             }`}
           >
-            Customer Reviews ({totalReviews || product.reviewCount})
+            Reviews ({totalReviews || product.reviewCount})
           </button>
         </div>
 
@@ -480,15 +480,58 @@ export const ProductDetailView: React.FC = () => {
 
       {/* Related Products Section */}
       {relatedProducts.length > 0 && (
-        <div className="space-y-6">
-          <h3 className="font-serif text-2xl font-bold text-earth-900">You Might Also Love</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="space-y-4 sm:space-y-6 pb-20 md:pb-0">
+          <h3 className="font-serif text-xl sm:text-2xl font-bold text-earth-900">You Might Also Love</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {relatedProducts.map(rel => (
               <ProductCard key={rel.id} product={rel} />
             ))}
           </div>
         </div>
       )}
+
+      {/* Mobile Sticky Bottom Purchase Bar (hidden on md+ screens) */}
+      <div className="mobile-sticky-purchase md:hidden">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <img 
+              src={selectedImage || product.images[0]} 
+              alt={product.name} 
+              className="w-10 h-10 rounded-xl object-cover border border-earth-200 shrink-0 bg-cream-50"
+            />
+            <div className="min-w-0">
+              <span className="font-serif font-extrabold text-base text-terracotta-600 block leading-tight">
+                ₹{product.price.toLocaleString('en-IN')}
+              </span>
+              <span className="text-[10px] text-earth-500 truncate block">
+                {product.inStock ? 'In Stock' : 'Out of Stock'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => toggleWishlist(product.id)}
+              className={`p-2.5 rounded-xl border transition-colors ${
+                inWish ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-cream-50 border-earth-200 text-earth-700'
+              }`}
+              title="Wishlist"
+              aria-label="Wishlist"
+            >
+              <Heart className={`w-4 h-4 ${inWish ? 'fill-rose-500' : ''}`} />
+            </button>
+
+            <button
+              onClick={() => addToCart(product, quantity)}
+              disabled={!product.inStock}
+              className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>Add to Cart</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

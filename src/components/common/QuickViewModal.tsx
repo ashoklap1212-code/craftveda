@@ -17,32 +17,32 @@ export const QuickViewModal: React.FC = () => {
   const inWish = isInWishlist(product.id);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-950/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-3xl shadow-warm-hover border border-earth-100 max-w-3xl w-full overflow-hidden relative max-h-[90vh] flex flex-col md:flex-row">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-earth-950/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-warm-hover border border-earth-100 max-w-3xl w-full overflow-hidden relative max-h-[90vh] flex flex-col md:flex-row my-auto">
         {/* Close Button */}
         <button
           onClick={() => setQuickViewProductId(null)}
-          className="absolute right-4 top-4 text-earth-500 hover:text-earth-800 bg-cream-100 p-2 rounded-full border border-earth-200 z-10 transition-colors"
+          className="absolute right-3 top-3 sm:right-4 sm:top-4 text-earth-500 hover:text-earth-800 bg-cream-100 p-2 rounded-full border border-earth-200 z-10 transition-colors"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Product Image */}
-        <div className="md:w-1/2 bg-cream-100 p-6 flex items-center justify-center relative">
+        <div className="md:w-1/2 bg-cream-100 p-4 sm:p-6 flex items-center justify-center relative h-52 sm:h-auto shrink-0">
           <img 
             src={product.images[0]} 
             alt={product.name} 
-            className="max-h-80 w-auto object-contain rounded-2xl shadow-warm"
+            className="max-h-full w-auto object-contain rounded-2xl shadow-warm"
           />
           {product.discountPercentage > 0 && (
-            <span className="absolute top-4 left-4 bg-terracotta-500 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-sm">
+            <span className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-terracotta-500 text-white text-[10px] sm:text-xs font-extrabold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-sm">
               {product.discountPercentage}% OFF
             </span>
           )}
         </div>
 
         {/* Product Information */}
-        <div className="md:w-1/2 p-6 md:p-8 flex flex-col justify-between overflow-y-auto space-y-4">
+        <div className="md:w-1/2 p-4 sm:p-6 md:p-8 flex flex-col justify-between overflow-y-auto space-y-3 sm:space-y-4">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-terracotta-600 bg-terracotta-50 px-2.5 py-1 rounded-md">
               {product.categoryName}

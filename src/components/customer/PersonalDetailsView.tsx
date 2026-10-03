@@ -69,26 +69,26 @@ export const PersonalDetailsView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[80vh] bg-cream py-12 px-4 flex items-center justify-center animate-fade-in">
-      <div className="max-w-xl w-full bg-white rounded-3xl shadow-warm-hover border border-earth-100 overflow-hidden">
+    <div className="min-h-[80vh] bg-cream py-6 sm:py-12 px-3 sm:px-4 flex items-center justify-center animate-fade-in">
+      <div className="max-w-xl w-full bg-white rounded-2xl sm:rounded-3xl shadow-warm-hover border border-earth-100 overflow-hidden">
         {/* Banner Header */}
-        <div className="bg-earth-900 text-cream p-8 text-center relative">
-          <div className="w-16 h-16 rounded-3xl bg-terracotta-500 text-white flex items-center justify-center text-3xl mx-auto mb-3 shadow-warm">
+        <div className="bg-earth-900 text-cream p-5 sm:p-8 text-center relative">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-terracotta-500 text-white flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-2 sm:mb-3 shadow-warm">
             🏺
           </div>
-          <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold px-3 py-1 rounded-full mb-2">
+          <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full mb-1.5 sm:mb-2">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Account Verified
           </span>
-          <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-white">Complete Personal Details</h1>
+          <h1 className="font-serif text-xl sm:text-3xl font-extrabold text-white">Complete Personal Details</h1>
           <p className="text-xs text-earth-300 mt-1 max-w-md mx-auto leading-relaxed">
             Please fill in your name and profile details to complete your CraftVeda account setup.
           </p>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-4 sm:space-y-5">
           {errorMsg && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-2xl text-xs flex items-center gap-2">
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 sm:p-3.5 rounded-2xl text-xs flex items-center gap-2">
               <span className="font-bold">⚠️ Error:</span> {errorMsg}
             </div>
           )}

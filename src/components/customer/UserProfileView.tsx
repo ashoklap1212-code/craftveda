@@ -20,7 +20,6 @@ export const UserProfileView: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(currentUser?.name || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
-  const [profileImage, setProfileImage] = useState(currentUser?.profileImage || '');
 
   // Add Address State
   const [isAddingAddress, setIsAddingAddress] = useState(false);
@@ -52,7 +51,7 @@ export const UserProfileView: React.FC = () => {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateUserProfile({ name, phone, profileImage });
+    await updateUserProfile({ name, phone });
     setIsEditing(false);
   };
 
@@ -75,39 +74,39 @@ export const UserProfileView: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl space-y-8 animate-fade-in">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-5xl space-y-5 sm:space-y-8 animate-fade-in">
       {/* Profile Header Banner */}
-      <div className="bg-earthy-card p-6 sm:p-8 rounded-3xl border border-earth-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-4 text-center sm:text-left">
-          <div className="w-20 h-20 rounded-full bg-terracotta-500 text-white font-serif font-extrabold text-3xl flex items-center justify-center border-4 border-white shadow-warm shrink-0 overflow-hidden">
+      <div className="bg-earthy-card p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 text-center sm:text-left">
+          <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-terracotta-500 text-white font-serif font-extrabold text-xl sm:text-3xl flex items-center justify-center border-3 sm:border-4 border-white shadow-warm shrink-0 overflow-hidden">
             {currentUser.profileImage ? (
               <img src={currentUser.profileImage} alt="" className="w-full h-full object-cover" />
             ) : currentUser.name && currentUser.name.trim() ? (
               currentUser.name.trim().charAt(0).toUpperCase()
             ) : (
-              <UserIcon className="w-10 h-10" />
+              <UserIcon className="w-7 h-7 sm:w-10 sm:h-10" />
             )}
           </div>
           <div>
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="bg-terracotta-100 text-terracotta-700 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
+              <span className="bg-terracotta-100 text-terracotta-700 text-[9px] sm:text-[10px] font-extrabold uppercase px-2 sm:px-2.5 py-0.5 rounded-md">
                 Verified Craft Patron
               </span>
-              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md flex items-center gap-1">
+              <span className="bg-emerald-100 text-emerald-800 text-[9px] sm:text-[10px] font-extrabold uppercase px-2 sm:px-2.5 py-0.5 rounded-md flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                {currentUser.authProvider === 'google' ? 'Google Authenticated' : 'Email Verified'}
+                {currentUser.authProvider === 'google' ? 'Google Auth' : 'Verified'}
               </span>
             </div>
-            <h1 className="font-serif text-2xl font-extrabold text-earth-900 mt-1">{currentUser.name || 'Craft Patron'}</h1>
-            <p className="text-xs text-earth-500">{currentUser.email}{currentUser.phone ? ` • ${currentUser.phone}` : ''}</p>
+            <h1 className="font-serif text-lg sm:text-2xl font-extrabold text-earth-900 mt-1">{currentUser.name || 'Craft Patron'}</h1>
+            <p className="text-[11px] sm:text-xs text-earth-500 truncate max-w-[260px] sm:max-w-none">{currentUser.email}{currentUser.phone ? ` • ${currentUser.phone}` : ''}</p>
           </div>
         </div>
 
         <button
           onClick={logoutUser}
-          className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors"
+          className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors self-center sm:self-auto"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>Sign Out</span>
         </button>
       </div>
@@ -167,7 +166,6 @@ export const UserProfileView: React.FC = () => {
                 onClick={() => {
                   setName(currentUser.name || '');
                   setPhone(currentUser.phone || '');
-                  setProfileImage(currentUser.profileImage || '');
                   setIsEditing(true);
                 }}
                 className="text-xs font-bold text-terracotta-600 hover:underline flex items-center gap-1 bg-cream-100 px-3 py-1.5 rounded-xl border border-earth-200"
@@ -223,17 +221,6 @@ export const UserProfileView: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-earth-700 mb-1">Profile Image URL (Optional)</label>
-              <input
-                type="text"
-                disabled={!isEditing}
-                value={profileImage}
-                onChange={(e) => setProfileImage(e.target.value)}
-                placeholder="https://example.com/avatar.jpg"
-                className="w-full bg-cream-50 disabled:bg-cream-100/60 border border-earth-200 rounded-xl px-3.5 py-2.5 text-xs text-earth-900 focus:ring-2 focus:ring-terracotta-500 outline-none font-medium"
-              />
-            </div>
 
             {isEditing && (
               <div className="pt-2 flex items-center gap-3">

@@ -36,10 +36,10 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-earth-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-3xl shadow-warm-hover border border-earth-100 max-w-md w-full overflow-hidden relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-earth-950/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-warm-hover border border-earth-100 max-w-md w-full my-auto overflow-hidden relative">
         {/* Header */}
-        <div className="bg-earth-900 text-white p-5 flex items-center justify-between">
+        <div className="bg-earth-900 text-white p-4 sm:p-5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-terracotta-500 text-white flex items-center justify-center text-sm font-bold">
               ⚡
@@ -49,15 +49,15 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
               <p className="text-[10px] text-earth-300">Secure Instant Payment • Powered by Razorpay UPI</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-earth-400 hover:text-white">
+          <button onClick={onClose} className="text-earth-400 hover:text-white p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Amount Banner */}
-        <div className="bg-terracotta-50 p-4 border-b border-terracotta-100 flex items-center justify-between">
-          <span className="text-xs text-earth-700 font-medium">Total Amount Payable:</span>
-          <span className="font-serif font-extrabold text-xl text-terracotta-600">
+        <div className="bg-terracotta-50 p-3 sm:p-4 border-b border-terracotta-100 flex items-center justify-between">
+          <span className="text-xs text-earth-700 font-medium">Total Payable:</span>
+          <span className="font-serif font-extrabold text-lg sm:text-xl text-terracotta-600">
             ₹{totalAmount.toLocaleString('en-IN')}
           </span>
         </div>

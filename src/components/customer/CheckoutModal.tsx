@@ -111,9 +111,9 @@ export const CheckoutView: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-5xl">
       {/* Header breadcrumb & step indicator */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-earth-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-8 pb-3 sm:pb-4 border-b border-earth-200">
         <div>
           <button
             onClick={() => setActiveCustomerPage('home')}
@@ -121,38 +121,38 @@ export const CheckoutView: React.FC = () => {
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Store
           </button>
-          <h1 className="font-serif text-3xl font-extrabold text-earth-900">Checkout & Order Placement</h1>
+          <h1 className="font-serif text-xl sm:text-3xl font-extrabold text-earth-900 leading-tight">Checkout &amp; Order</h1>
         </div>
 
         {/* Stepper Progress */}
-        <div className="flex items-center gap-2 sm:gap-4 text-xs font-bold">
+        <div className="flex items-center gap-2 sm:gap-4 text-xs font-bold self-start sm:self-auto">
           <div className={`flex items-center gap-1.5 ${step >= 1 ? 'text-terracotta-600' : 'text-earth-400'}`}>
             <span className="w-6 h-6 rounded-full bg-terracotta-100 text-terracotta-600 flex items-center justify-center text-xs">1</span>
-            <span className="hidden sm:inline">Address</span>
+            <span className="inline sm:inline">Address</span>
           </div>
           <span className="text-earth-300">→</span>
           <div className={`flex items-center gap-1.5 ${step >= 2 ? 'text-terracotta-600' : 'text-earth-400'}`}>
             <span className="w-6 h-6 rounded-full bg-terracotta-100 text-terracotta-600 flex items-center justify-center text-xs">2</span>
-            <span className="hidden sm:inline">Order Summary</span>
+            <span className="inline sm:inline">Summary</span>
           </div>
           <span className="text-earth-300">→</span>
           <div className={`flex items-center gap-1.5 ${step >= 3 ? 'text-terracotta-600' : 'text-earth-400'}`}>
             <span className="w-6 h-6 rounded-full bg-terracotta-100 text-terracotta-600 flex items-center justify-center text-xs">3</span>
-            <span className="hidden sm:inline">UPI Payment</span>
+            <span className="inline sm:inline">Payment</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8">
         {/* Left Interactive Flow Column */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-5 sm:space-y-6">
           {/* STEP 1: Address Details */}
           {step === 1 && (
-            <div className="bg-white p-6 rounded-3xl border border-earth-200 shadow-sm space-y-6 animate-fade-in">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-sm space-y-4 sm:space-y-6 animate-fade-in">
               <div className="flex items-center justify-between border-b border-earth-100 pb-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-terracotta-500" />
-                  <h3 className="font-serif font-bold text-lg text-earth-900">Step 1 — Shipping & Customer Details</h3>
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-earth-900">Step 1 — Shipping Details</h3>
                 </div>
               </div>
 
@@ -296,11 +296,11 @@ export const CheckoutView: React.FC = () => {
 
           {/* STEP 2: Order Summary & Payment Choice */}
           {step >= 2 && (
-            <div className="bg-white p-6 rounded-3xl border border-earth-200 shadow-sm space-y-6 animate-fade-in">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-sm space-y-5 sm:space-y-6 animate-fade-in">
               <div className="flex items-center justify-between border-b border-earth-100 pb-3">
                 <div className="flex items-center gap-2">
                   <ShoppingBag className="w-5 h-5 text-terracotta-500" />
-                  <h3 className="font-serif font-bold text-lg text-earth-900">Step 2 — Order Verification & Payment</h3>
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-earth-900">Step 2 — Order Verification</h3>
                 </div>
                 <button
                   onClick={() => setStep(1)}
@@ -420,8 +420,8 @@ export const CheckoutView: React.FC = () => {
 
         {/* Right Order Summary Sticky Card */}
         <div className="lg:col-span-5">
-          <div className="bg-earthy-card p-6 rounded-3xl border border-earth-200 shadow-sm sticky top-24 space-y-4">
-            <h3 className="font-serif font-bold text-lg text-earth-900 border-b border-earth-200 pb-3">
+          <div className="bg-earthy-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-sm sticky top-24 space-y-4">
+            <h3 className="font-serif font-bold text-base sm:text-lg text-earth-900 border-b border-earth-200 pb-3">
               Order Summary
             </h3>
 

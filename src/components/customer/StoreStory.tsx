@@ -6,14 +6,14 @@ export const StoreStory: React.FC = () => {
   const { setActiveCustomerPage } = useStore();
 
   return (
-    <section className="py-20 bg-earthy-card border-b border-earth-100 relative overflow-hidden">
+    <section className="py-10 sm:py-20 bg-earthy-card border-b border-earth-100 relative overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Visual Column */}
           <div className="lg:col-span-6 relative">
             <div className="relative rounded-3xl overflow-hidden shadow-warm border-4 border-white">
               <img
-                src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?q=80&w=1000&auto=format&fit=crop"
+                src="\Gemini_Generated_Image_br93uhbr93uhbr93.png"
                 alt="Artisan shaping traditional clay pot"
                 className="w-full h-80 sm:h-96 object-cover"
               />

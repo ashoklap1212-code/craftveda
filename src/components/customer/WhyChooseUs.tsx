@@ -38,25 +38,25 @@ export const WhyChooseUs: React.FC = () => {
   ];
 
   return (
-    <section className="py-16 bg-cream-50">
+    <section className="py-10 sm:py-16 bg-cream-50">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-bold uppercase tracking-widest text-terracotta-600">
-            Trust & Quality Assurance
+        <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-12">
+          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-terracotta-600">
+            Trust &amp; Quality Assurance
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl font-extrabold text-earth-900 mt-1">
+          <h2 className="font-serif text-2xl sm:text-3xl sm:text-4xl font-extrabold text-earth-900 mt-1">
             Why Shop With CraftVeda?
           </h2>
-          <p className="text-xs sm:text-sm text-earth-600 mt-2">
+          <p className="text-xs sm:text-sm text-earth-600 mt-1.5 sm:mt-2">
             We take extreme care in bringing fragile Indian handicrafts from rural potter wheels straight to your home.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           {benefits.map((item, index) => (
             <div 
               key={index}
-              className="bg-white p-6 rounded-2xl border border-earth-200/80 shadow-sm hover:shadow-warm transition-all duration-300 flex items-start gap-4"
+              className="bg-white p-4 sm:p-6 rounded-2xl border border-earth-200/80 shadow-sm hover:shadow-warm transition-all duration-300 flex items-start gap-3 sm:gap-4"
             >
               <div className="p-3 bg-terracotta-50 rounded-xl shrink-0">
                 {item.icon}

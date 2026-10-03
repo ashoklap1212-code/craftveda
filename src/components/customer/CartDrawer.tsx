@@ -58,24 +58,24 @@ export const CartDrawer: React.FC = () => {
       {/* Overlay Backdrop */}
       <div 
         onClick={() => setIsCartDrawerOpen(false)}
-        className="absolute inset-0 bg-earth-950/70 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-earth-950/70 backdrop-blur-sm transition-opacity"
       ></div>
 
       {/* Slide Drawer Container */}
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+      <div className="absolute inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
         <div className="w-screen max-w-md bg-cream-50 shadow-2xl border-l border-earth-200 flex flex-col justify-between animate-slide-right">
           
           {/* Header */}
-          <div className="p-5 sm:p-6 bg-white border-b border-earth-100 flex items-center justify-between sticky top-0 z-10 shadow-xs">
+          <div className="p-3.5 sm:p-6 bg-white border-b border-earth-100 flex items-center justify-between sticky top-0 z-10 shadow-xs">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-terracotta-100 text-terracotta-600 flex items-center justify-center font-bold">
-                <ShoppingBag className="w-5 h-5" />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-terracotta-100 text-terracotta-600 flex items-center justify-center font-bold">
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="font-serif font-extrabold text-lg text-earth-900 leading-none">
+                <h3 className="font-serif font-extrabold text-base sm:text-lg text-earth-900 leading-none">
                   Your Cart
                 </h3>
-                <span className="text-[11px] text-earth-500 font-medium">
+                <span className="text-[10px] sm:text-[11px] text-earth-500 font-medium">
                   {cart.reduce((sum, i) => sum + i.quantity, 0)} Items Selected
                 </span>
               </div>
@@ -83,7 +83,9 @@ export const CartDrawer: React.FC = () => {
 
             <button
               onClick={() => setIsCartDrawerOpen(false)}
-              className="p-2 rounded-full hover:bg-cream-200 text-earth-500 transition-colors"
+              className="p-1.5 sm:p-2 rounded-full hover:bg-cream-200 text-earth-500 transition-colors"
+              title="Close Cart"
+              aria-label="Close Cart"
             >
               <X className="w-5 h-5" />
             </button>
@@ -91,7 +93,7 @@ export const CartDrawer: React.FC = () => {
 
           {/* Free Shipping Progress Indicator */}
           {cart.length > 0 && (
-            <div className="bg-terracotta-50/70 border-b border-terracotta-100 px-5 py-3 text-xs">
+            <div className="bg-terracotta-50/70 border-b border-terracotta-100 px-3.5 sm:px-5 py-2.5 sm:py-3 text-xs">
               {amountNeededForFreeShipping > 0 && orderCharges.isFreeShippingEnabled ? (
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-[11px] font-bold text-earth-800">
@@ -162,7 +164,7 @@ export const CartDrawer: React.FC = () => {
 
                     {/* Quantity Controls */}
                     <div className="flex items-center justify-between mt-2.5">
-                      <div className="flex items-center border border-earth-200 rounded-xl bg-cream-50 overflow-hidden shadow-2xs">
+                      <div className="flex items-center border border-earth-200 rounded-xl bg-cream-50 overflow-hidden shadow-xs">
                         <button
                           onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
                           className="px-2.5 py-1 text-earth-700 hover:bg-cream-200 transition-colors font-bold"
@@ -203,23 +205,23 @@ export const CartDrawer: React.FC = () => {
 
           {/* Footer Summary & Checkout */}
           {cart.length > 0 && (
-            <div className="p-5 sm:p-6 bg-white border-t border-earth-200 space-y-4 shadow-xl">
+            <div className="p-3.5 sm:p-6 bg-white border-t border-earth-200 space-y-3 sm:space-y-4 shadow-xl">
               
               {/* Coupon Form */}
               <form onSubmit={handleApplyCoupon} className="flex gap-2">
                 <div className="relative flex-1">
-                  <Tag className="w-3.5 h-3.5 text-earth-400 absolute left-3.5 top-3" />
+                  <Tag className="w-3.5 h-3.5 text-earth-400 absolute left-3 top-2.5 sm:left-3.5 sm:top-3" />
                   <input
                     type="text"
                     placeholder="Coupon code (e.g. CRAFT10)"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
-                    className="w-full bg-cream-50 border border-earth-200 rounded-xl py-2.5 pl-9 pr-3 text-xs uppercase font-extrabold text-earth-900 placeholder-earth-400 focus:border-terracotta-500 outline-none"
+                    className="w-full bg-cream-50 border border-earth-200 rounded-xl py-2 sm:py-2.5 pl-8 sm:pl-9 pr-3 text-xs uppercase font-extrabold text-earth-900 placeholder-earth-400 focus:border-terracotta-500 outline-none"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="bg-earth-900 hover:bg-earth-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-xs"
+                  className="bg-earth-900 hover:bg-earth-800 text-white font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs shadow-xs shrink-0"
                 >
                   Apply
                 </button>
@@ -231,7 +233,7 @@ export const CartDrawer: React.FC = () => {
               )}
 
               {/* Price Breakdown */}
-              <div className="space-y-2 text-xs text-earth-600 pt-2 border-t border-earth-100">
+              <div className="space-y-1.5 sm:space-y-2 text-xs text-earth-600 pt-1.5 sm:pt-2 border-t border-earth-100">
                 <div className="flex justify-between">
                   <span>Cart Subtotal</span>
                   <span className="font-bold text-earth-900">₹{cartSubtotal.toLocaleString('en-IN')}</span>
@@ -254,24 +256,24 @@ export const CartDrawer: React.FC = () => {
                   </div>
                 )}
                 
-                <div className="flex justify-between text-base font-serif font-extrabold text-earth-900 pt-2.5 border-t border-earth-200">
+                <div className="flex justify-between text-sm sm:text-base font-serif font-extrabold text-earth-900 pt-2 border-t border-earth-200">
                   <span>Total Payable</span>
-                  <span className="text-terracotta-600 text-lg">₹{finalCartTotal.toLocaleString('en-IN')}</span>
+                  <span className="text-terracotta-600 text-base sm:text-lg">₹{finalCartTotal.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
               {/* Checkout CTA */}
               <button
                 onClick={handleProceedToCheckout}
-                className="w-full bg-terracotta-gradient hover:opacity-95 text-white font-bold py-4 rounded-2xl text-xs flex items-center justify-center gap-2.5 shadow-warm hover:shadow-warm-hover transition-all glow-terracotta"
+                className="w-full bg-terracotta-gradient hover:opacity-95 text-white font-bold py-3.5 sm:py-4 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-warm hover:shadow-warm-hover transition-all glow-terracotta"
               >
                 <span>Proceed to Safe Checkout</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <div className="text-[10px] text-earth-400 text-center flex items-center justify-center gap-2 pt-0.5 font-medium">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>100% Damage Replacement & Secure UPI Payment</span>
+              <div className="text-[10px] text-earth-400 text-center flex items-center justify-center gap-1.5 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>100% Damage Replacement &amp; Secure Payment</span>
               </div>
 
             </div>

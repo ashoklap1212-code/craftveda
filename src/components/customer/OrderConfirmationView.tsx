@@ -24,38 +24,38 @@ export const OrderConfirmationView: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-3xl animate-fade-in space-y-8">
+    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 max-w-3xl animate-fade-in space-y-5 sm:space-y-8">
       {/* Banner */}
-      <div className="bg-white p-8 rounded-3xl border border-earth-200 shadow-warm text-center space-y-4">
-        <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
-          <CheckCircle2 className="w-10 h-10" />
+      <div className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-warm text-center space-y-3.5 sm:space-y-4">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
+          <CheckCircle2 className="w-7 h-7 sm:w-10 sm:h-10" />
         </div>
 
         <div>
-          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-block">
             {order.payment?.paymentMethod === 'COD' ? 'Cash on Delivery Selected' : `Payment Received via ${order.payment?.paymentMethod || 'UPI'}`}
           </span>
-          <h1 className="font-serif text-3xl font-extrabold text-earth-900 mt-2">Order Confirmed!</h1>
-          <p className="text-xs text-earth-500 mt-1">
+          <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-earth-900 mt-2">Order Confirmed!</h1>
+          <p className="text-xs text-earth-500 mt-1 max-w-md mx-auto">
             Thank you for shopping with CraftVeda. We have notified our artisan team to inspect and package your order.
           </p>
         </div>
 
         {/* Key Attributes */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-earth-100 text-xs text-earth-700">
-          <div className="bg-cream-50 p-3 rounded-xl">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-earth-100 text-xs text-earth-700">
+          <div className="bg-cream-50 p-2.5 sm:p-3 rounded-xl">
             <span className="text-earth-400 block text-[10px]">Order ID</span>
             <span className="font-bold text-earth-900">{order.orderNumber}</span>
           </div>
-          <div className="bg-cream-50 p-3 rounded-xl">
+          <div className="bg-cream-50 p-2.5 sm:p-3 rounded-xl">
             <span className="text-earth-400 block text-[10px]">Order Date</span>
             <span className="font-bold text-earth-900">{order.createdAt}</span>
           </div>
-          <div className="bg-cream-50 p-3 rounded-xl">
+          <div className="bg-cream-50 p-2.5 sm:p-3 rounded-xl">
             <span className="text-earth-400 block text-[10px]">Total Paid</span>
             <span className="font-bold text-terracotta-600">₹{order.totalAmount.toLocaleString('en-IN')}</span>
           </div>
-          <div className="bg-cream-50 p-3 rounded-xl">
+          <div className="bg-cream-50 p-2.5 sm:p-3 rounded-xl">
             <span className="text-earth-400 block text-[10px]">Est. Delivery</span>
             <span className="font-bold text-emerald-700">{order.estimatedDeliveryDate}</span>
           </div>
