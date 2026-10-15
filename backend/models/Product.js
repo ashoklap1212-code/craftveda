@@ -91,6 +91,67 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: 'Triple cushioned shockproof box',
     },
+    // Reference details & specifications fields
+    brand: {
+      type: String,
+      default: 'CraftVeda Artisans',
+    },
+    modelNumber: {
+      type: String,
+      default: '',
+    },
+    shape: {
+      type: String,
+      default: 'Round',
+    },
+    idealUsage: {
+      type: String,
+      default: 'Pickle Jar & Kitchen Storage',
+    },
+    isFragile: {
+      type: String,
+      default: 'Yes',
+    },
+    isAirtight: {
+      type: String,
+      default: 'Yes',
+    },
+    isDisposable: {
+      type: String,
+      default: 'No',
+    },
+    packOf: {
+      type: String,
+      default: '1',
+    },
+    capacity: {
+      type: String,
+      default: '1000 ml',
+    },
+    sellerName: {
+      type: String,
+      default: 'VsCeramics',
+    },
+    sellerRating: {
+      type: Number,
+      default: 4.8,
+    },
+    sellerYears: {
+      type: String,
+      default: '2 years with CraftVeda',
+    },
+    manufacturerInfo: {
+      type: String,
+      default: 'Handcrafted in Khurja / Jaipur craft clusters by generational potters. Marketed and packed by CraftVeda Handicrafts Pvt Ltd.',
+    },
+    importantNote: {
+      type: String,
+      default: 'Product information provided by the seller on the Website is not exhaustive, please read the label on the physical product carefully for complete information provided by the manufacturer. For additional information, please contact the manufacturer.',
+    },
+    highlights: {
+      type: [String],
+      default: [],
+    },
     inStock: {
       type: Boolean,
       default: true,

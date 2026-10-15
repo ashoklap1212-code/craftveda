@@ -32,6 +32,21 @@ export const AdminProducts: React.FC = () => {
   const [dimensions, setDimensions] = useState('20cm x 20cm x 25cm');
   const [weight, setWeight] = useState('2.0 kg');
   const [color, setColor] = useState('Terracotta Red & Ochre');
+  // Extended Specifications Fields
+  const [brand, setBrand] = useState('VsCeramics');
+  const [modelNumber, setModelNumber] = useState('');
+  const [shape, setShape] = useState('Round');
+  const [idealUsage, setIdealUsage] = useState('Pickle Jar');
+  const [isFragile, setIsFragile] = useState('Yes');
+  const [isAirtight, setIsAirtight] = useState('Yes');
+  const [isDisposable, setIsDisposable] = useState('No');
+  const [packOf, setPackOf] = useState('1');
+  const [capacity, setCapacity] = useState('1000 ml');
+  const [sellerName, setSellerName] = useState('VsCeramics');
+  const [sellerRating, setSellerRating] = useState(2.7);
+  const [sellerYears, setSellerYears] = useState('2 years with CraftVeda');
+  const [manufacturerInfo, setManufacturerInfo] = useState('');
+  const [importantNote, setImportantNote] = useState('');
 
   // Robust Filtering Logic with Null-Safety
   const filteredProducts = products.filter(p => {
@@ -70,6 +85,20 @@ export const AdminProducts: React.FC = () => {
     setDimensions('20cm x 20cm x 25cm');
     setWeight('2.0 kg');
     setColor('Terracotta Red & Ochre');
+    setBrand('VsCeramics');
+    setModelNumber('');
+    setShape('Round');
+    setIdealUsage('Pickle Jar');
+    setIsFragile('Yes');
+    setIsAirtight('Yes');
+    setIsDisposable('No');
+    setPackOf('1');
+    setCapacity('1000 ml');
+    setSellerName('VsCeramics');
+    setSellerRating(2.7);
+    setSellerYears('2 years with CraftVeda');
+    setManufacturerInfo('Crafted by traditional rural artisans. Marketed and packed by CraftVeda Handicrafts Pvt Ltd.');
+    setImportantNote('Product information provided by the seller on the Website is not exhaustive, please read the label on the physical product carefully for complete information provided by the manufacturer. For additional information, please contact the manufacturer.');
     setEditingProduct(null);
   };
 
@@ -87,10 +116,24 @@ export const AdminProducts: React.FC = () => {
     setSelectedFile(null);
     setUploadError('');
     setDescription(p.description || '');
-    setMaterial(p.material || '');
-    setDimensions(p.dimensions || '');
-    setWeight(p.weight || '');
-    setColor(p.color || '');
+    setMaterial(p.material || 'High Fired Terracotta Clay');
+    setDimensions(p.dimensions || '20cm x 20cm x 25cm');
+    setWeight(p.weight || '2.0 kg');
+    setColor(p.color || 'Black');
+    setBrand(p.brand || 'VsCeramics');
+    setModelNumber(p.modelNumber || '');
+    setShape(p.shape || 'Round');
+    setIdealUsage(p.idealUsage || 'Pickle Jar');
+    setIsFragile(p.isFragile || 'Yes');
+    setIsAirtight(p.isAirtight || 'Yes');
+    setIsDisposable(p.isDisposable || 'No');
+    setPackOf(p.packOf || '1');
+    setCapacity(p.capacity || '1000 ml');
+    setSellerName(p.sellerName || 'VsCeramics');
+    setSellerRating(p.sellerRating !== undefined ? p.sellerRating : 2.7);
+    setSellerYears(p.sellerYears || '2 years with CraftVeda');
+    setManufacturerInfo(p.manufacturerInfo || 'Crafted by traditional rural artisans. Marketed and packed by CraftVeda Handicrafts Pvt Ltd.');
+    setImportantNote(p.importantNote || 'Product information provided by the seller on the Website is not exhaustive, please read the label on the physical product carefully for complete information provided by the manufacturer. For additional information, please contact the manufacturer.');
     setIsAddModalOpen(true);
   };
 
@@ -164,10 +207,24 @@ export const AdminProducts: React.FC = () => {
       material: material || 'Traditional Fired Clay',
       dimensions: dimensions || 'Standard Craft Dimensions',
       weight: weight || '1.5 kg',
-      color: color || 'Earthy Natural',
+      color: color || 'Black',
+      brand: brand || 'VsCeramics',
+      modelNumber: modelNumber || name,
+      shape: shape || 'Round',
+      idealUsage: idealUsage || 'Pickle Jar',
+      isFragile: isFragile || 'Yes',
+      isAirtight: isAirtight || 'Yes',
+      isDisposable: isDisposable || 'No',
+      packOf: packOf || '1',
+      capacity: capacity || '1000 ml',
+      sellerName: sellerName || 'VsCeramics',
+      sellerRating: Number(sellerRating) || 2.7,
+      sellerYears: sellerYears || '2 years with CraftVeda',
+      manufacturerInfo: manufacturerInfo || 'Crafted by traditional rural artisans. Marketed and packed by CraftVeda Handicrafts Pvt Ltd.',
+      importantNote: importantNote || 'Product information provided by the seller on the Website is not exhaustive, please read the label on the physical product carefully for complete information provided by the manufacturer. For additional information, please contact the manufacturer.',
       manufacturingType: 'Potters Wheel & Artisanal Kiln',
       careInstructions: 'Clean with damp microfiber cloth.',
-      suitableUsage: 'Home decor, kitchen & dining',
+      suitableUsage: idealUsage || 'Home decor, kitchen & dining',
       packagingInfo: 'Triple cushioned eco impact box',
       inStock: Number(stockQuantity) > 0,
       stockQuantity: Math.max(0, Number(stockQuantity)),
@@ -546,6 +603,185 @@ export const AdminProducts: React.FC = () => {
                 <div>
                   <label className="block text-earth-300 font-bold mb-1">Dimensions</label>
                   <input type="text" value={dimensions} onChange={e => setDimensions(e.target.value)} className="w-full bg-earth-800 border border-earth-700 rounded-xl px-3.5 py-2.5 text-white outline-none" />
+                </div>
+              </div>
+
+              {/* Extended Product Specifications (Reference Layout) */}
+              <div className="p-4 bg-earth-800/80 rounded-2xl border border-earth-700/80 space-y-3.5">
+                <div className="flex items-center justify-between border-b border-earth-700 pb-2">
+                  <h4 className="font-serif font-bold text-sm text-terracotta-400">Product Highlights & Specifications</h4>
+                  <span className="text-[10px] text-earth-400">Matches Product Details Page Layout</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Brand</label>
+                    <input
+                      type="text"
+                      value={brand}
+                      onChange={e => setBrand(e.target.value)}
+                      placeholder="e.g. VsCeramics"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3.5 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Model Number / Full Name</label>
+                    <input
+                      type="text"
+                      value={modelNumber}
+                      onChange={e => setModelNumber(e.target.value)}
+                      placeholder="e.g. New Elegant Ceramic Black Colour Cutting Jar 1000ML"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3.5 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Selected Pack of</label>
+                    <input
+                      type="text"
+                      value={packOf}
+                      onChange={e => setPackOf(e.target.value)}
+                      placeholder="e.g. 1"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Selected Capacity</label>
+                    <input
+                      type="text"
+                      value={capacity}
+                      onChange={e => setCapacity(e.target.value)}
+                      placeholder="e.g. 1000 ml"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Color</label>
+                    <input
+                      type="text"
+                      value={color}
+                      onChange={e => setColor(e.target.value)}
+                      placeholder="e.g. Black"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Shape</label>
+                    <input
+                      type="text"
+                      value={shape}
+                      onChange={e => setShape(e.target.value)}
+                      placeholder="e.g. Round"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Ideal Usage</label>
+                    <input
+                      type="text"
+                      value={idealUsage}
+                      onChange={e => setIdealUsage(e.target.value)}
+                      placeholder="e.g. Pickle Jar"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Airtight</label>
+                    <select
+                      value={isAirtight}
+                      onChange={e => setIsAirtight(e.target.value)}
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500 cursor-pointer"
+                    >
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Is Fragile</label>
+                    <select
+                      value={isFragile}
+                      onChange={e => setIsFragile(e.target.value)}
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500 cursor-pointer"
+                    >
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Disposable</label>
+                    <select
+                      value={isDisposable}
+                      onChange={e => setIsDisposable(e.target.value)}
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500 cursor-pointer"
+                    >
+                      <option value="No">No</option>
+                      <option value="Yes">Yes</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Seller & Delivery details */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-earth-700/60">
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Seller Name</label>
+                    <input
+                      type="text"
+                      value={sellerName}
+                      onChange={e => setSellerName(e.target.value)}
+                      placeholder="e.g. VsCeramics"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Seller Rating (★)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="1"
+                      max="5"
+                      value={sellerRating}
+                      onChange={e => setSellerRating(Number(e.target.value))}
+                      placeholder="e.g. 2.7"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-earth-300 font-bold mb-1">Seller Tenure</label>
+                    <input
+                      type="text"
+                      value={sellerYears}
+                      onChange={e => setSellerYears(e.target.value)}
+                      placeholder="e.g. 2 years with Flipkart / CraftVeda"
+                      className="w-full bg-earth-900 border border-earth-700 rounded-xl px-3 py-2 text-white outline-none focus:border-terracotta-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-earth-700/60">
+                  <label className="block text-earth-300 font-bold mb-1">Manufacturer Info</label>
+                  <textarea
+                    rows={2}
+                    value={manufacturerInfo}
+                    onChange={e => setManufacturerInfo(e.target.value)}
+                    placeholder="Handcrafted by artisanal potters..."
+                    className="w-full bg-earth-900 border border-earth-700 rounded-xl p-2.5 text-white outline-none focus:border-terracotta-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-earth-300 font-bold mb-1">Important Note</label>
+                  <textarea
+                    rows={2}
+                    value={importantNote}
+                    onChange={e => setImportantNote(e.target.value)}
+                    placeholder="Important information or disclaimer for customers..."
+                    className="w-full bg-earth-900 border border-earth-700 rounded-xl p-2.5 text-white outline-none focus:border-terracotta-500"
+                  />
                 </div>
               </div>
 

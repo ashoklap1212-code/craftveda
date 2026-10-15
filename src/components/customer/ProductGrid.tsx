@@ -128,6 +128,46 @@ export const ProductGrid: React.FC = () => {
         </div>
       )}
 
+      {/* Mobile Horizontal Quick Categories Strip */}
+      <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar scroll-smooth">
+        <button
+          onClick={() => setSelectedCategoryFilter('all')}
+          className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+            selectedCategoryFilter === 'all'
+              ? 'bg-terracotta-500 text-white shadow-sm'
+              : 'bg-white text-earth-700 hover:bg-cream-100 border border-earth-200'
+          }`}
+        >
+          All ({products.length})
+        </button>
+        {categories.map((cat) => {
+          const count = products.filter(p => {
+            if (!p.category) return false;
+            const pCat = p.category.toLowerCase().trim();
+            const cId = cat.id.toLowerCase().trim();
+            const cName = cat.name.toLowerCase().trim();
+            return pCat === cId || pCat === cName || pCat.replace(/[^a-z0-9]/g, '') === cId.replace(/[^a-z0-9]/g, '');
+          }).length;
+          const isSelected = selectedCategoryFilter === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategoryFilter(cat.id)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
+                isSelected
+                  ? 'bg-terracotta-500 text-white font-bold shadow-sm'
+                  : 'bg-white text-earth-700 hover:bg-cream-100 border border-earth-200 font-medium'
+              }`}
+            >
+              <span>{cat.name}</span>
+              <span className={`text-[10px] font-bold ${isSelected ? 'text-white/80' : 'text-earth-400'}`}>
+                ({count})
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Main Layout */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 items-start">
         
@@ -139,24 +179,14 @@ export const ProductGrid: React.FC = () => {
           />
         )}
 
-        {/* Filter Sidebar (Desktop sidebar + Mobile slide-over drawer) */}
-        <aside className={`
-          bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-sm
-          md:col-span-3 md:block md:static md:z-auto md:w-auto md:max-h-none md:overflow-visible
-          ${isMobileFilterOpen 
-            ? 'fixed inset-y-0 right-0 z-50 w-80 max-w-[85vw] shadow-2xl overflow-y-auto animate-slide-right flex flex-col justify-between rounded-none rounded-l-3xl space-y-4' 
-            : 'hidden space-y-5'
-          }
-        `}>
+        {/* Desktop Filter Sidebar (Exact Original Layout) */}
+        <aside className="hidden md:block md:col-span-3 bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-sm space-y-5">
           <div className="flex items-center justify-between border-b border-earth-100 pb-3">
             <h3 className="font-serif font-bold text-sm text-earth-900 flex items-center gap-2">
               <Filter className="w-4 h-4 text-terracotta-500" /> Filter Catalogue
             </h3>
             <div className="flex items-center gap-3">
               <button onClick={resetFilters} className="text-[11px] font-bold text-terracotta-600 hover:underline">Reset</button>
-              <button onClick={() => setIsMobileFilterOpen(false)} className="md:hidden text-earth-500 hover:text-earth-900 p-1">
-                <X className="w-5 h-5" />
-              </button>
             </div>
           </div>
 
@@ -238,17 +268,151 @@ export const ProductGrid: React.FC = () => {
               className="w-4 h-4 accent-terracotta-500 cursor-pointer"
             />
           </div>
-
-          {/* Mobile close */}
-          <div className="pt-2 md:hidden">
-            <button
-              onClick={() => setIsMobileFilterOpen(false)}
-              className="w-full bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-3 rounded-xl text-xs shadow-warm transition-all"
-            >
-              Apply Filters ({filteredProducts.length} items)
-            </button>
-          </div>
         </aside>
+
+        {/* Mobile Filter Slide-over Drawer (Responsive View) */}
+        {isMobileFilterOpen && (
+          <aside className="md:hidden fixed inset-y-0 right-0 z-50 w-84 max-w-[88vw] bg-white shadow-2xl overflow-hidden animate-slide-right flex flex-col rounded-l-3xl">
+            <div className="flex items-center justify-between border-b border-earth-100 p-4 shrink-0">
+              <h3 className="font-serif font-bold text-sm text-earth-900 flex items-center gap-2">
+                <Filter className="w-4 h-4 text-terracotta-500" /> Filter Catalogue
+              </h3>
+              <div className="flex items-center gap-3">
+                <button onClick={resetFilters} className="text-[11px] font-bold text-terracotta-600 hover:underline">Reset</button>
+                <button onClick={() => setIsMobileFilterOpen(false)} className="text-earth-500 hover:text-earth-900 p-1 rounded-full hover:bg-cream-100">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Filter Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              {/* Categories */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-earth-800 block">Categories</label>
+                  {selectedCategoryFilter !== 'all' && (
+                    <button 
+                      onClick={() => setSelectedCategoryFilter('all')}
+                      className="text-[11px] font-bold text-terracotta-600 hover:underline"
+                    >
+                      View All
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-1.5 text-xs text-earth-700">
+                  <button
+                    onClick={() => setSelectedCategoryFilter('all')}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl font-medium transition-all flex items-center justify-between ${
+                      selectedCategoryFilter === 'all' 
+                        ? 'bg-terracotta-500 text-white font-bold shadow-xs' 
+                        : 'bg-cream-50 hover:bg-cream-100 text-earth-800 border border-earth-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">🏺</span>
+                      <span>All Categories</span>
+                    </div>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                      selectedCategoryFilter === 'all' ? 'bg-white/20 text-white' : 'bg-earth-200/60 text-earth-600'
+                    }`}>
+                      {products.length}
+                    </span>
+                  </button>
+                  {categories.map((cat) => {
+                    const count = products.filter(p => {
+                      if (!p.category) return false;
+                      const pCat = p.category.toLowerCase().trim();
+                      const cId = cat.id.toLowerCase().trim();
+                      const cName = cat.name.toLowerCase().trim();
+                      return pCat === cId || pCat === cName || pCat.replace(/[^a-z0-9]/g, '') === cId.replace(/[^a-z0-9]/g, '');
+                    }).length;
+                    const isSelected = selectedCategoryFilter === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategoryFilter(cat.id)}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all font-medium flex items-center justify-between ${
+                          isSelected 
+                            ? 'bg-terracotta-500 text-white font-bold shadow-xs' 
+                            : 'bg-cream-50 hover:bg-cream-100 text-earth-800 border border-earth-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                          {cat.image ? (
+                            <img src={cat.image} alt="" className="w-6 h-6 rounded-md object-cover shrink-0 border border-earth-200" />
+                          ) : null}
+                          <span className="truncate leading-tight">{cat.name}</span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-earth-200/60 text-earth-600'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Price */}
+              <div className="space-y-2 pt-3 border-t border-earth-100">
+                <div className="flex justify-between text-xs font-bold text-earth-800">
+                  <span>Max Price</span>
+                  <span className="text-terracotta-600">₹{maxPrice.toLocaleString('en-IN')}</span>
+                </div>
+                <input
+                  type="range" min="500" max="3000" step="100"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-terracotta-500 cursor-pointer"
+                />
+              </div>
+
+              {/* Rating */}
+              <div className="space-y-2 pt-3 border-t border-earth-100">
+                <label className="text-xs font-bold text-earth-800 block">Minimum Rating</label>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[0, 4, 4.5].map((stars) => (
+                    <button
+                      key={stars}
+                      onClick={() => setMinRating(stars)}
+                      className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                        minRating === stars ? 'bg-amber-500 text-white border-amber-500' : 'bg-cream-50 border-earth-200 text-earth-700'
+                      }`}
+                    >
+                      {stars === 0 ? 'All' : `${stars}★+`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stock */}
+              <div className="pt-3 border-t border-earth-100 flex items-center justify-between text-xs font-bold text-earth-800">
+                <span>In Stock Only</span>
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => setInStockOnly(e.target.checked)}
+                  className="w-4 h-4 accent-terracotta-500 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Mobile Bottom Apply Button */}
+            <div className="p-4 border-t border-earth-100 bg-white shrink-0">
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="w-full bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-3 rounded-xl text-xs shadow-warm transition-all flex items-center justify-center gap-1.5"
+              >
+                <span>Apply Filters</span>
+                <span className="bg-white/20 px-2 py-0.5 rounded-full text-[11px] font-bold">
+                  {filteredProducts.length} items
+                </span>
+              </button>
+            </div>
+          </aside>
+        )}
 
         {/* Product Grid — 2-column on mobile */}
         <main className="md:col-span-9">

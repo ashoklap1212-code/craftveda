@@ -141,64 +141,82 @@ export const Navbar: React.FC = () => {
                 )}
               </button>
 
-              {/* Notification Dropdown */}
+              {/* Notification Dropdown & Mobile Modal */}
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white rounded-3xl shadow-warm-hover border border-earth-100 p-4 z-50 animate-fade-in max-h-[70vh] flex flex-col">
-                  <div className="flex items-center justify-between border-b border-earth-100 pb-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-terracotta-600" />
-                      <h4 className="font-serif font-extrabold text-sm text-earth-900">Notifications</h4>
-                      {unreadNotifCount > 0 && (
-                        <span className="bg-terracotta-100 text-terracotta-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          {unreadNotifCount} unread
-                        </span>
+                <>
+                  {/* Mobile Backdrop */}
+                  <div 
+                    className="fixed inset-0 bg-earth-950/40 backdrop-blur-xs z-40 sm:hidden"
+                    onClick={() => setIsNotificationsOpen(false)}
+                  />
+
+                  {/* Message / Notification Container */}
+                  <div className="fixed left-3 right-3 top-[68px] max-w-sm mx-auto sm:max-w-none sm:static sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 md:w-96 bg-white rounded-3xl shadow-2xl sm:shadow-warm-hover border border-earth-100 p-4 z-50 animate-fade-in max-h-[75vh] flex flex-col">
+                    <div className="flex items-center justify-between border-b border-earth-100 pb-3 mb-3">
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-terracotta-600" />
+                        <h4 className="font-serif font-extrabold text-sm text-earth-900">Notifications &amp; Messages</h4>
+                        {unreadNotifCount > 0 && (
+                          <span className="bg-terracotta-100 text-terracotta-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            {unreadNotifCount} unread
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {unreadNotifCount > 0 && (
+                          <button 
+                            onClick={markAllNotificationsAsRead} 
+                            className="text-xs text-terracotta-600 hover:underline font-bold flex items-center gap-1"
+                          >
+                            <CheckCheck className="w-3.5 h-3.5" /> Mark all
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setIsNotificationsOpen(false)}
+                          className="sm:hidden text-earth-400 hover:text-earth-700 p-1 rounded-full hover:bg-cream-100 transition-colors"
+                          aria-label="Close messages"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="overflow-y-auto space-y-2.5 pr-1 flex-1 max-h-[60vh] sm:max-h-[50vh]">
+                      {notifications.length === 0 ? (
+                        <div className="text-center py-8 space-y-2">
+                          <div className="w-10 h-10 rounded-full bg-cream-100 text-earth-400 flex items-center justify-center mx-auto text-lg">🔔</div>
+                          <p className="text-xs text-earth-500 font-medium">No messages or notifications yet</p>
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div 
+                            key={n.id}
+                            className={`p-3 rounded-2xl text-xs transition-all relative group ${
+                              n.read ? 'bg-cream-50/80 border border-earth-100' : 'bg-terracotta-50/70 border border-terracotta-200'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <span className="font-bold text-earth-900 leading-tight text-xs sm:text-[11px] break-words">{n.title}</span>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {!n.read && (
+                                  <button onClick={() => markNotificationAsRead(n.id)} className="text-terracotta-600 hover:text-terracotta-800 p-1" title="Mark as read">
+                                    <CheckCircle className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                                  </button>
+                                )}
+                                <button onClick={() => deleteNotification(n.id)} className="text-earth-400 hover:text-rose-600 p-1" title="Delete">
+                                  <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                            <p className="text-earth-600 leading-relaxed text-xs sm:text-[10px] mb-1.5 break-words">{n.message}</p>
+                            <span className="text-[10px] sm:text-[9px] font-mono text-earth-400">
+                              {n.createdAt ? new Date(n.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                            </span>
+                          </div>
+                        ))
                       )}
                     </div>
-                    {unreadNotifCount > 0 && (
-                      <button 
-                        onClick={markAllNotificationsAsRead} 
-                        className="text-xs text-terracotta-600 hover:underline font-bold flex items-center gap-1"
-                      >
-                        <CheckCheck className="w-3.5 h-3.5" /> Mark all
-                      </button>
-                    )}
                   </div>
-                  <div className="overflow-y-auto space-y-2.5 pr-1 flex-1">
-                    {notifications.length === 0 ? (
-                      <div className="text-center py-8 space-y-2">
-                        <div className="w-10 h-10 rounded-full bg-cream-100 text-earth-400 flex items-center justify-center mx-auto text-lg">🔔</div>
-                        <p className="text-xs text-earth-500 font-medium">No notifications yet</p>
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div 
-                          key={n.id}
-                          className={`p-3 rounded-2xl text-xs transition-all relative group ${
-                            n.read ? 'bg-cream-50/80 border border-earth-100' : 'bg-terracotta-50/70 border border-terracotta-200'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <span className="font-bold text-earth-900 leading-tight text-[11px]">{n.title}</span>
-                            <div className="flex items-center gap-1 shrink-0">
-                              {!n.read && (
-                                <button onClick={() => markNotificationAsRead(n.id)} className="text-terracotta-600 p-0.5" title="Mark as read">
-                                  <CheckCircle className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                              <button onClick={() => deleteNotification(n.id)} className="text-earth-400 hover:text-rose-600 p-0.5" title="Delete">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                          <p className="text-earth-600 leading-relaxed text-[10px] mb-1">{n.message}</p>
-                          <span className="text-[9px] font-mono text-earth-400">
-                            {n.createdAt ? new Date(n.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                </>
               )}
             </div>
 
@@ -251,8 +269,13 @@ export const Navbar: React.FC = () => {
                 </button>
 
                 {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-warm border border-earth-100 p-2 z-50 animate-fade-in">
-                    <div className="px-3 py-2 border-b border-earth-100 mb-1">
+                  <>
+                    <div 
+                      className="fixed inset-0 bg-earth-950/20 backdrop-blur-xs z-40 sm:hidden"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-warm border border-earth-100 p-2 z-50 animate-fade-in">
+                      <div className="px-3 py-2 border-b border-earth-100 mb-1">
                       <p className="font-bold text-sm text-earth-900 truncate">{currentUser.name || 'Craft Patron'}</p>
                       <p className="text-xs text-earth-500 truncate">{currentUser.email}</p>
                     </div>
@@ -277,7 +300,8 @@ export const Navbar: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                )}
+                </>
+              )}
               </div>
             ) : (
               <button

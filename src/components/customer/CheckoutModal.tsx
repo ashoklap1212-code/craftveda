@@ -10,9 +10,21 @@ import {
 export const CheckoutView: React.FC = () => {
   const { 
     cart, cartSubtotal, cartDiscount, cartTotal, 
+    directPurchaseItem, setDirectPurchaseItem,
+    selectedShippingAddress, setSelectedShippingAddress,
+    addSavedAddress,
     currentUser, setActiveCustomerPage, showToast, createOrder,
     orderCharges
   } = useStore();
+
+  const isDirectPurchase = !!directPurchaseItem;
+  const checkoutItems = directPurchaseItem ? [directPurchaseItem] : cart;
+
+  const checkoutSubtotal = checkoutItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const checkoutShipping = (orderCharges.isFreeShippingEnabled && checkoutSubtotal >= orderCharges.freeShippingThreshold)
+    ? 0
+    : (orderCharges.shippingFee + orderCharges.packagingFee);
+  const baseCheckoutTotal = checkoutSubtotal + checkoutShipping;
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isUpiModalOpen, setIsUpiModalOpen] = useState(false);
@@ -29,7 +41,7 @@ export const CheckoutView: React.FC = () => {
     if (!couponInput.trim()) return;
     setValidatingCoupon(true);
     try {
-      const res = await apiService.validateCoupon(couponInput.trim(), cartSubtotal);
+      const res = await apiService.validateCoupon(couponInput.trim(), checkoutSubtotal);
       if (res.valid) {
         setAppliedCouponCode(res.code);
         setAppliedDiscount(res.discountAmount);
@@ -48,7 +60,7 @@ export const CheckoutView: React.FC = () => {
     }
   };
 
-  const finalPayableTotal = Math.max(0, cartTotal - appliedDiscount);
+  const finalPayableTotal = Math.max(0, baseCheckoutTotal - appliedDiscount);
 
   const handlePlaceCodOrder = async () => {
     setIsSubmittingCod(true);
@@ -61,8 +73,11 @@ export const CheckoutView: React.FC = () => {
     }
   };
 
-  // Address Form State
+  // Address Form State - initialized from selectedShippingAddress or currentUser saved addresses
   const [address, setAddress] = useState<ShippingAddress>(() => {
+    if (selectedShippingAddress) {
+      return selectedShippingAddress;
+    }
     if (currentUser && currentUser.savedAddresses.length > 0) {
       return currentUser.savedAddresses[0];
     }
@@ -81,11 +96,18 @@ export const CheckoutView: React.FC = () => {
     };
   });
 
-  if (cart.length === 0) {
+  // Sync address when selectedShippingAddress updates
+  React.useEffect(() => {
+    if (selectedShippingAddress) {
+      setAddress(selectedShippingAddress);
+    }
+  }, [selectedShippingAddress]);
+
+  if (checkoutItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16 text-center space-y-4">
-        <h3 className="font-serif font-bold text-2xl text-earth-900">Your Cart is Empty</h3>
-        <p className="text-xs text-earth-500">Please add items to your cart before proceeding to checkout.</p>
+        <h3 className="font-serif font-bold text-2xl text-earth-900">Your Checkout is Empty</h3>
+        <p className="text-xs text-earth-500">Please select an item or add items to your cart before proceeding to checkout.</p>
         <button
           onClick={() => setActiveCustomerPage('shop')}
           className="bg-terracotta-500 text-white font-bold px-6 py-2.5 rounded-full text-xs"
@@ -98,7 +120,8 @@ export const CheckoutView: React.FC = () => {
 
   const handleSelectSavedAddress = (saved: ShippingAddress) => {
     setAddress(saved);
-    showToast('Saved address loaded!', 'info');
+    setSelectedShippingAddress(saved);
+    showToast('Saved address selected for order!', 'info');
   };
 
   const handleStep1Submit = (e: React.FormEvent) => {
@@ -107,6 +130,11 @@ export const CheckoutView: React.FC = () => {
       showToast('Please fill all required address fields', 'error');
       return;
     }
+    // Also save address to account if user is logged in
+    if (currentUser) {
+      addSavedAddress(address);
+    }
+    setSelectedShippingAddress(address);
     setStep(2);
   };
 
@@ -318,8 +346,17 @@ export const CheckoutView: React.FC = () => {
 
               {/* Items List */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-earth-700 uppercase tracking-wider">Cart Items ({cart.length})</h4>
-                {cart.map(item => (
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-earth-700 uppercase tracking-wider">
+                    {isDirectPurchase ? 'Direct Purchase Item (1)' : `Cart Items (${cart.length})`}
+                  </h4>
+                  {isDirectPurchase && (
+                    <span className="text-[10px] font-bold bg-terracotta-100 text-terracotta-700 px-2 py-0.5 rounded-full">
+                      Buy Now Checkout
+                    </span>
+                  )}
+                </div>
+                {checkoutItems.map(item => (
                   <div key={item.product.id} className="flex items-center justify-between gap-3 text-xs border-b border-earth-100 pb-3">
                     <div className="flex items-center gap-3">
                       <img src={item.product.images[0]} alt={item.product.name} className="w-12 h-12 rounded-lg object-cover bg-cream-100" />
@@ -428,14 +465,14 @@ export const CheckoutView: React.FC = () => {
             <div className="space-y-2 text-xs text-earth-600">
               <div className="flex justify-between">
                 <span>Items Subtotal</span>
-                <span className="font-bold text-earth-900">₹{cartSubtotal.toLocaleString('en-IN')}</span>
+                <span className="font-bold text-earth-900">₹{checkoutSubtotal.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between">
                 <span>{orderCharges.safeFragileShippingLabel}</span>
                 <span className="font-bold text-earth-900">
-                  {(orderCharges.isFreeShippingEnabled && cartSubtotal >= orderCharges.freeShippingThreshold)
+                  {(orderCharges.isFreeShippingEnabled && checkoutSubtotal >= orderCharges.freeShippingThreshold)
                     ? <span className="text-emerald-600 font-bold">FREE</span>
-                    : `₹${orderCharges.shippingFee + orderCharges.packagingFee}`
+                    : `₹${checkoutShipping}`
                   }
                 </span>
               </div>

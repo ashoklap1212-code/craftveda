@@ -210,3 +210,13 @@ body {
   border-top: 1px solid rgba(220, 115, 81, 0.12);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Hide scrollbar utility for clean mobile scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

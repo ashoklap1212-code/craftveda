@@ -115,6 +115,14 @@ interface StoreContextType {
   toggleWishlist: (productId: string) => Promise<void>;
   isInWishlist: (productId: string) => boolean;
 
+  // Direct Buy Now Purchase Flow
+  directPurchaseItem: CartItem | null;
+  setDirectPurchaseItem: (item: CartItem | null) => void;
+  buyNowDirect: (product: Product, quantity?: number) => void;
+  selectedShippingAddress: ShippingAddress | null;
+  setSelectedShippingAddress: (address: ShippingAddress | null) => void;
+  deleteSavedAddress: (index: number) => Promise<void>;
+
   // Orders & Checkout
   orders: Order[];
   fetchOrders: () => Promise<void>;
@@ -158,6 +166,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Direct Buy Now and Selected Shipping Address State
+  const [directPurchaseItem, setDirectPurchaseItem] = useState<CartItem | null>(() => {
+    const saved = sessionStorage.getItem('craftveda_direct_purchase');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [selectedShippingAddress, setSelectedShippingAddress] = useState<ShippingAddress | null>(null);
+
+  // Sync selected address if user has saved addresses and none selected yet
+  useEffect(() => {
+    if (currentUser?.savedAddresses && currentUser.savedAddresses.length > 0 && !selectedShippingAddress) {
+      setSelectedShippingAddress(currentUser.savedAddresses[0]);
+    }
+  }, [currentUser, selectedShippingAddress]);
+
+  // Keep directPurchaseItem saved in sessionStorage for reliability
+  useEffect(() => {
+    if (directPurchaseItem) {
+      sessionStorage.setItem('craftveda_direct_purchase', JSON.stringify(directPurchaseItem));
+    } else {
+      sessionStorage.removeItem('craftveda_direct_purchase');
+    }
+  }, [directPurchaseItem]);
 
   // Toast Helper
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -410,13 +441,43 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const addSavedAddress = (address: ShippingAddress) => {
+  const addSavedAddress = async (address: ShippingAddress) => {
     if (!currentUser) return;
-    const exists = currentUser.savedAddresses.some(a => a.street === address.street && a.pincode === address.pincode);
+    const exists = currentUser.savedAddresses.some(
+      a => a.houseFlat === address.houseFlat && a.street === address.street && a.pincode === address.pincode
+    );
     if (!exists) {
-      const updatedAddresses = [...currentUser.savedAddresses, address];
-      updateUserProfile({ savedAddresses: updatedAddresses });
+      const updatedAddresses = [address, ...currentUser.savedAddresses];
+      await updateUserProfile({ savedAddresses: updatedAddresses });
+      setSelectedShippingAddress(address);
+    } else {
+      setSelectedShippingAddress(address);
+      showToast('Address is already saved', 'info');
     }
+  };
+
+  const deleteSavedAddress = async (index: number) => {
+    if (!currentUser) return;
+    const updated = currentUser.savedAddresses.filter((_, i) => i !== index);
+    await updateUserProfile({ savedAddresses: updated });
+    if (selectedShippingAddress && currentUser.savedAddresses[index]?.street === selectedShippingAddress.street) {
+      setSelectedShippingAddress(updated.length > 0 ? updated[0] : null);
+    }
+    showToast('Saved address removed', 'info');
+  };
+
+  // Direct Buy Now method
+  const buyNowDirect = (product: Product, quantity = 1) => {
+    if (!product.inStock || product.stockQuantity < 1) {
+      showToast(`${product.name} is out of stock`, 'error');
+      return;
+    }
+    const finalQty = Math.max(1, Math.min(quantity, product.stockQuantity));
+    setDirectPurchaseItem({ product, quantity: finalQty });
+
+    // Navigate straight to Checkout & Order without touching cart
+    setActiveCustomerPage('checkout');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Cart Management
@@ -653,7 +714,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     const orderNum = `CV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const subtotal = cartSubtotal;
+    const checkoutItems = directPurchaseItem ? [directPurchaseItem] : cart;
+    const subtotal = checkoutItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     const delivery = (orderCharges.isFreeShippingEnabled && subtotal >= orderCharges.freeShippingThreshold)
       ? 0
       : (orderCharges.shippingFee + orderCharges.packagingFee);
@@ -663,7 +725,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     const finalTotal = subtotal + delivery - discount;
 
-    const orderItems = cart.map(item => ({
+    const orderItems = checkoutItems.map(item => ({
       productId: item.product.id,
       productName: item.product.name,
       productImage: item.product.images[0],
@@ -703,7 +765,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setOrders(prev => [createdApiOrder, ...prev]);
         setCurrentCheckoutOrder(createdApiOrder);
         setSelectedOrderId(createdApiOrder.id);
-        clearCart();
+        if (directPurchaseItem) {
+          setDirectPurchaseItem(null);
+        } else {
+          clearCart();
+        }
         setActiveCustomerPage('order-confirmation');
         showToast(`Order #${createdApiOrder.orderNumber} confirmed!`, 'success');
         fetchNotifications();
@@ -821,6 +887,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         cartTotal,
         cartSubtotal,
         cartDiscount,
+
+        directPurchaseItem,
+        setDirectPurchaseItem,
+        buyNowDirect,
+        selectedShippingAddress,
+        setSelectedShippingAddress,
+        deleteSavedAddress,
 
         wishlist,
         toggleWishlist,
