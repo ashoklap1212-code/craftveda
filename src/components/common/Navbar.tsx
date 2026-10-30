@@ -424,7 +424,7 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Bottom Navigation Bar */}
       <div className="mobile-bottom-nav md:hidden">
-        <div className="flex items-center justify-around px-2 py-2">
+        <div className="flex items-center justify-around px-2 h-[60px]">
           <button
             onClick={() => handleNavClick('home')}
             className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors min-w-[52px] ${activeCustomerPage === 'home' ? 'text-terracotta-600' : 'text-earth-500'}`}

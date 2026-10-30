@@ -14,7 +14,7 @@ export const CheckoutView: React.FC = () => {
     selectedShippingAddress, setSelectedShippingAddress,
     addSavedAddress,
     currentUser, setActiveCustomerPage, showToast, createOrder,
-    orderCharges
+    orderCharges, navigateBackToProductDetail
   } = useStore();
 
   const isDirectPurchase = !!directPurchaseItem;
@@ -109,10 +109,10 @@ export const CheckoutView: React.FC = () => {
         <h3 className="font-serif font-bold text-2xl text-earth-900">Your Checkout is Empty</h3>
         <p className="text-xs text-earth-500">Please select an item or add items to your cart before proceeding to checkout.</p>
         <button
-          onClick={() => setActiveCustomerPage('shop')}
-          className="bg-terracotta-500 text-white font-bold px-6 py-2.5 rounded-full text-xs"
+          onClick={() => navigateBackToProductDetail()}
+          className="bg-terracotta-500 text-white font-bold px-6 py-2.5 rounded-full text-xs hover:bg-terracotta-600 transition-colors"
         >
-          Browse Products
+          Back to Shopping
         </button>
       </div>
     );
@@ -144,10 +144,11 @@ export const CheckoutView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-8 pb-3 sm:pb-4 border-b border-earth-200">
         <div>
           <button
-            onClick={() => setActiveCustomerPage('home')}
-            className="text-xs text-earth-500 hover:text-earth-800 flex items-center gap-1 mb-1"
+            type="button"
+            onClick={() => navigateBackToProductDetail()}
+            className="text-xs text-earth-600 hover:text-terracotta-600 font-bold flex items-center gap-1.5 mb-1 transition-colors cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Store
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to Shopping
           </button>
           <h1 className="font-serif text-xl sm:text-3xl font-extrabold text-earth-900 leading-tight">Checkout &amp; Order</h1>
         </div>
@@ -356,18 +357,34 @@ export const CheckoutView: React.FC = () => {
                     </span>
                   )}
                 </div>
-                {checkoutItems.map(item => (
-                  <div key={item.product.id} className="flex items-center justify-between gap-3 text-xs border-b border-earth-100 pb-3">
-                    <div className="flex items-center gap-3">
-                      <img src={item.product.images[0]} alt={item.product.name} className="w-12 h-12 rounded-lg object-cover bg-cream-100" />
-                      <div>
-                        <p className="font-bold text-earth-900 line-clamp-1">{item.product.name}</p>
-                        <p className="text-earth-500 text-[11px]">Qty: {item.quantity} × ₹{item.product.price.toLocaleString('en-IN')}</p>
+                {checkoutItems.map(item => {
+                  const pack = item.selectedPack || item.product.packOf || '1';
+                  const capacity = item.selectedCapacity || item.product.capacity || '1000 ml';
+                  return (
+                    <div key={item.product.id} className="flex items-center justify-between gap-3 text-xs border-b border-earth-100 pb-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img src={item.product.images[0]} alt={item.product.name} className="w-12 h-12 rounded-lg object-contain bg-cream-100 border border-earth-200 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-earth-900 line-clamp-1">{item.product.name}</p>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-earth-700 bg-cream-100 px-1.5 py-0.5 rounded font-medium border border-earth-200">
+                              Pack: <strong className="font-bold text-earth-900">{pack}</strong>
+                            </span>
+                            <span className="text-[10px] text-earth-700 bg-cream-100 px-1.5 py-0.5 rounded font-medium border border-earth-200">
+                              Capacity: <strong className="font-bold text-earth-900">{capacity}</strong>
+                            </span>
+                          </div>
+                          <p className="text-earth-600 text-[11px] mt-0.5 font-medium">
+                            Qty: <strong className="text-earth-900 font-bold">{item.quantity}</strong> × ₹{item.product.price.toLocaleString('en-IN')}
+                          </p>
+                        </div>
                       </div>
+                      <span className="font-bold text-earth-900 font-serif shrink-0 text-sm">
+                        ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                      </span>
                     </div>
-                    <span className="font-bold text-earth-900 font-serif">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Payment Method Selector */}
@@ -458,9 +475,46 @@ export const CheckoutView: React.FC = () => {
         {/* Right Order Summary Sticky Card */}
         <div className="lg:col-span-5">
           <div className="bg-earthy-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-earth-200 shadow-sm sticky top-24 space-y-4">
-            <h3 className="font-serif font-bold text-base sm:text-lg text-earth-900 border-b border-earth-200 pb-3">
-              Order Summary
+            <h3 className="font-serif font-bold text-base sm:text-lg text-earth-900 border-b border-earth-200 pb-3 flex items-center justify-between">
+              <span>Order Summary</span>
+              {isDirectPurchase && (
+                <span className="text-[10px] font-bold bg-terracotta-100 text-terracotta-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Direct Buy
+                </span>
+              )}
             </h3>
+
+            {/* Product items in this checkout */}
+            <div className="space-y-3 pb-3 border-b border-earth-200">
+              {checkoutItems.map(item => {
+                const pack = item.selectedPack || item.product.packOf || '1';
+                const capacity = item.selectedCapacity || item.product.capacity || '1000 ml';
+                return (
+                  <div key={item.product.id} className="flex items-center justify-between gap-2.5 text-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img src={item.product.images[0]} alt={item.product.name} className="w-11 h-11 rounded-lg object-contain bg-white border border-earth-200 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-bold text-earth-900 line-clamp-1 text-xs">{item.product.name}</p>
+                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                          <span className="text-[10px] text-earth-700 bg-cream-100 px-1.5 py-0.2 rounded font-medium border border-earth-200">
+                            Pack: <strong className="font-bold text-earth-900">{pack}</strong>
+                          </span>
+                          <span className="text-[10px] text-earth-700 bg-cream-100 px-1.5 py-0.2 rounded font-medium border border-earth-200">
+                            Capacity: <strong className="font-bold text-earth-900">{capacity}</strong>
+                          </span>
+                        </div>
+                        <p className="text-earth-600 text-[11px] mt-0.5 font-medium">
+                          Qty: <strong className="text-earth-900 font-bold">{item.quantity}</strong> × ₹{item.product.price.toLocaleString('en-IN')}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-earth-900 font-serif shrink-0 text-xs">
+                      ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="space-y-2 text-xs text-earth-600">
               <div className="flex justify-between">

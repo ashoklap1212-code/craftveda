@@ -75,66 +75,7 @@ const MainAppContent: React.FC = () => {
               </div>
             </section>
 
-            {/* Cultural Spotlight Banner */}
-            <section className="bg-earth-900 text-cream-100 py-10 sm:py-16">
-              <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-center">
-                <div className="lg:col-span-8 space-y-3 sm:space-y-4">
-                  <span className="bg-terracotta-500 text-white text-[10px] font-extrabold uppercase px-2.5 sm:px-3 py-1 rounded-md inline-block">
-                    Heritage Spotlight
-                  </span>
-                  <h2 className="font-serif text-2xl sm:text-3xl sm:text-4xl font-extrabold text-white leading-tight">
-                    Unfired Clay &amp; High-Density Stoneware Urns
-                  </h2>
-                  <p className="text-xs sm:text-sm text-earth-300 max-w-2xl leading-relaxed">
-                    Used for generations across North and South India to keep food fresh, preserve home pickles, and maintain natural mineral water. Hand-turned on traditional potters wheels with pure river bed clay.
-                  </p>
-                </div>
-                <div className="lg:col-span-4 flex justify-start lg:justify-end pt-1 sm:pt-0">
-                  <button
-                    onClick={() => {
-                      setActiveCustomerPage('shop');
-                      setSelectedCategoryFilter('clay-pots');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-full text-xs shadow-warm transition-all"
-                  >
-                    Explore Clay Collection →
-                  </button>
-                </div>
-              </div>
-            </section>
 
-            {/* Best Sellers Section */}
-            <section className="py-8 sm:py-12 bg-cream">
-              <div className="container mx-auto px-3 sm:px-4">
-                <div className="flex flex-row items-end justify-between mb-5 sm:mb-8">
-                  <div>
-                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-terracotta-600">
-                      Customer Favorites
-                    </span>
-                    <h2 className="font-serif text-xl sm:text-3xl font-extrabold text-earth-900 mt-0.5 sm:mt-1">
-                      Best Sellers
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setActiveCustomerPage('shop');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="text-xs font-bold text-terracotta-600 hover:underline flex items-center gap-1 shrink-0"
-                  >
-                    <span>View All</span>
-                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                  {bestSellers.map((p) => (
-                    <ProductCard key={p.id} product={p} />
-                  ))}
-                </div>
-              </div>
-            </section>
 
             <StoreStory />
             <WhyChooseUs />

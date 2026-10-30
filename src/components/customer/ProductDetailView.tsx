@@ -15,12 +15,75 @@ export const ProductDetailView: React.FC = () => {
     selectedProductId, products, addToCart, toggleWishlist, isInWishlist,
     setActiveCustomerPage, currentUser, setIsAuthModalOpen, showToast,
     selectedShippingAddress, setSelectedShippingAddress, addSavedAddress,
-    buyNowDirect
+    buyNowDirect, lastPurchasedProductId, lastPurchasedQuantity,
+    lastPurchasedPack, lastPurchasedCapacity, setLastPurchasedProductId, setLastPurchasedQuantity,
+    setLastPurchasedPack, setLastPurchasedCapacity
   } = useStore();
 
   const product = products.find(p => p.id === selectedProductId) || products[0];
   const [selectedImage, setSelectedImage] = useState(product?.images[0] || '');
-  const [quantity, setQuantity] = useState(1);
+
+  // Initialize selection state: restore previously selected values if returning to the same product
+  const [quantity, setQuantity] = useState(() => {
+    if (product && lastPurchasedProductId === product.id && lastPurchasedQuantity > 0) {
+      return lastPurchasedQuantity;
+    }
+    return 1;
+  });
+
+  const [selectedPack, setSelectedPack] = useState(() => {
+    if (product && lastPurchasedProductId === product.id && lastPurchasedPack) {
+      return lastPurchasedPack;
+    }
+    return product?.packOf || '1';
+  });
+
+  const [selectedCapacity, setSelectedCapacity] = useState(() => {
+    if (product && lastPurchasedProductId === product.id && lastPurchasedCapacity) {
+      return lastPurchasedCapacity;
+    }
+    return product?.capacity || '1000 ml';
+  });
+
+  // Restore selection states when product changes
+  useEffect(() => {
+    if (product?.id) {
+      if (lastPurchasedProductId === product.id) {
+        if (lastPurchasedQuantity > 0) setQuantity(lastPurchasedQuantity);
+        if (lastPurchasedPack) setSelectedPack(lastPurchasedPack);
+        if (lastPurchasedCapacity) setSelectedCapacity(lastPurchasedCapacity);
+      } else {
+        setQuantity(1);
+        setSelectedPack(product.packOf || '1');
+        setSelectedCapacity(product.capacity || '1000 ml');
+      }
+    }
+  }, [product?.id]);
+
+  const handleQuantityChange = (newQty: number) => {
+    const valid = Math.max(1, Math.min(product?.stockQuantity || 99, newQty));
+    setQuantity(valid);
+    if (product) {
+      setLastPurchasedProductId(product.id);
+      setLastPurchasedQuantity(valid);
+    }
+  };
+
+  const handlePackChange = (newPack: string) => {
+    setSelectedPack(newPack);
+    if (product) {
+      setLastPurchasedProductId(product.id);
+      setLastPurchasedPack(newPack);
+    }
+  };
+
+  const handleCapacityChange = (newCapacity: string) => {
+    setSelectedCapacity(newCapacity);
+    if (product) {
+      setLastPurchasedProductId(product.id);
+      setLastPurchasedCapacity(newCapacity);
+    }
+  };
 
   // Address Selection Modal State
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -87,6 +150,21 @@ export const ProductDetailView: React.FC = () => {
   useEffect(() => {
     fetchReviews();
   }, [fetchReviews]);
+
+  const [showDesktopSticky, setShowDesktopSticky] = useState(false);
+
+  // Monitor scroll position to display sleek floating desktop purchase bar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowDesktopSticky(true);
+      } else {
+        setShowDesktopSticky(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (!product) return null;
 
@@ -185,23 +263,9 @@ export const ProductDetailView: React.FC = () => {
   const displayRating = averageRating > 0 ? averageRating.toFixed(1) : (product.rating ? product.rating.toFixed(1) : '3.8');
   const displayReviewCount = totalReviews > 0 ? totalReviews : (product.reviewCount || 4);
 
-  const [showDesktopSticky, setShowDesktopSticky] = useState(false);
-
-  // Monitor scroll position to display sleek floating desktop purchase bar
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 400) {
-        setShowDesktopSticky(true);
-      } else {
-        setShowDesktopSticky(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
-    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 max-w-6xl space-y-6">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-8 max-w-6xl space-y-6 pb-36 md:pb-8">
       {/* Back to Shop breadcrumb */}
       <button
         onClick={() => {
@@ -245,7 +309,7 @@ export const ProductDetailView: React.FC = () => {
             {/* Quantity Selector */}
             <div className="flex items-center border border-earth-300 rounded-xl bg-white overflow-hidden shadow-2xs">
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                onClick={() => handleQuantityChange(quantity - 1)}
                 className="px-2.5 py-1.5 text-earth-700 hover:bg-cream-100 font-bold text-xs transition-colors"
                 title="Decrease"
               >
@@ -253,7 +317,7 @@ export const ProductDetailView: React.FC = () => {
               </button>
               <span className="px-2.5 py-1.5 text-xs font-bold text-earth-900 min-w-[24px] text-center">{quantity}</span>
               <button
-                onClick={() => setQuantity(Math.min(product.stockQuantity || 99, quantity + 1))}
+                onClick={() => handleQuantityChange(quantity + 1)}
                 className="px-2.5 py-1.5 text-earth-700 hover:bg-cream-100 font-bold text-xs transition-colors"
                 title="Increase"
               >
@@ -271,7 +335,7 @@ export const ProductDetailView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => buyNowDirect(product, quantity)}
+              onClick={() => buyNowDirect(product, quantity, selectedPack, selectedCapacity)}
               disabled={!product.inStock}
               className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow-warm transition-all disabled:opacity-50"
             >
@@ -347,20 +411,20 @@ export const ProductDetailView: React.FC = () => {
           {/* Selected Pack of Section */}
           <div>
             <div className="text-xs font-semibold text-gray-800 mb-2">
-              Selected Pack of: <span className="font-bold text-gray-900">{packOfVal}</span>
+              Selected Pack of: <span className="font-bold text-gray-900">{selectedPack}</span>
             </div>
             <div className="inline-flex items-center justify-center min-w-[42px] px-3.5 py-2 bg-[#171717] text-white text-xs font-bold rounded-lg shadow-sm">
-              {packOfVal}
+              {selectedPack}
             </div>
           </div>
 
           {/* Selected Capacity Section */}
           <div>
             <div className="text-xs font-semibold text-gray-800 mb-2">
-              Selected Capacity: <span className="font-bold text-gray-900">{capacityVal}</span>
+              Selected Capacity: <span className="font-bold text-gray-900">{selectedCapacity}</span>
             </div>
             <div className="inline-flex items-center justify-center px-4 py-2 bg-[#171717] text-white text-xs font-bold rounded-lg shadow-sm">
-              {capacityVal}
+              {selectedCapacity}
             </div>
           </div>
 
@@ -492,12 +556,12 @@ export const ProductDetailView: React.FC = () => {
             </div>
           </div>
 
-          {/* Inline Add to Cart & Buy Now CTA Buttons */}
-          <div className="flex items-center gap-3 pt-2">
+          {/* Desktop Inline Add to Cart & Buy Now CTA Buttons (Desktop only - mobile has fixed bottom bar) */}
+          <div className="hidden md:flex items-center gap-3 pt-2">
             {/* Quantity Selector */}
             <div className="flex items-center border border-earth-300 rounded-xl bg-white overflow-hidden shadow-xs">
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                onClick={() => handleQuantityChange(quantity - 1)}
                 className="px-3 py-2.5 text-earth-700 hover:bg-cream-100 font-bold text-xs transition-colors"
                 title="Decrease quantity"
               >
@@ -505,7 +569,7 @@ export const ProductDetailView: React.FC = () => {
               </button>
               <span className="px-3 py-2.5 text-xs font-bold text-earth-900 min-w-[28px] text-center">{quantity}</span>
               <button
-                onClick={() => setQuantity(Math.min(product.stockQuantity || 99, quantity + 1))}
+                onClick={() => handleQuantityChange(quantity + 1)}
                 className="px-3 py-2.5 text-earth-700 hover:bg-cream-100 font-bold text-xs transition-colors"
                 title="Increase quantity"
               >
@@ -523,7 +587,7 @@ export const ProductDetailView: React.FC = () => {
             </button>
 
             <button
-              onClick={() => buyNowDirect(product, quantity)}
+              onClick={() => buyNowDirect(product, quantity, selectedPack, selectedCapacity)}
               disabled={!product.inStock}
               className="flex-1 bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-3 px-4 rounded-xl text-xs shadow-warm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
@@ -895,64 +959,49 @@ export const ProductDetailView: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile Sticky Bottom Purchase Bar */}
-      <div className="mobile-sticky-purchase md:hidden bg-white/95 backdrop-blur-md border-t border-earth-200 shadow-warm px-3.5 py-2.5 fixed bottom-0 inset-x-0 z-40 animate-fade-in">
-        <div className="flex items-center justify-between gap-2.5 max-w-lg mx-auto">
-          {/* Product Thumbnail & Price */}
-          <div className="flex items-center gap-2 min-w-0">
-            <img 
-              src={selectedImage || product.images[0]} 
-              alt={product.name} 
-              className="w-10 h-10 rounded-lg object-contain border border-earth-200 shrink-0 bg-cream-50"
-            />
-            <div className="min-w-0">
-              <span className="font-serif font-extrabold text-sm text-earth-900 block leading-tight">
-                ₹{product.price.toLocaleString('en-IN')}
-              </span>
-              <span className={`text-[10px] font-bold truncate block ${product.inStock ? 'text-emerald-700' : 'text-rose-600'}`}>
-                {product.inStock ? 'In Stock' : 'Out of Stock'}
-              </span>
-            </div>
-          </div>
-
-          {/* Compact Quantity selector on mobile */}
-          <div className="flex items-center border border-earth-300 rounded-lg bg-white overflow-hidden shrink-0">
+      {/* Mobile Fixed Bottom Purchase Bar — Mobile Responsive Only */}
+      <div 
+        className="mobile-sticky-purchase md:hidden fixed left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-earth-200 shadow-[0_-4px_20px_-2px_rgba(74,53,47,0.12)] px-3.5 py-2.5 transition-all"
+        style={{ bottom: 'calc(60px + env(safe-area-inset-bottom, 0px))' }}
+      >
+        <div className="flex items-center gap-2.5 sm:gap-3 max-w-lg mx-auto">
+          {/* Quantity Selector */}
+          <div className="flex items-center border border-earth-300 rounded-xl bg-white overflow-hidden shadow-xs shrink-0">
             <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="px-2 py-1 text-earth-700 hover:bg-cream-100 font-bold text-xs"
-              title="Decrease"
+              onClick={() => handleQuantityChange(quantity - 1)}
+              className="px-3 py-2.5 text-earth-700 hover:bg-cream-100 font-bold text-xs transition-colors"
+              title="Decrease quantity"
             >
               -
             </button>
-            <span className="px-2 py-1 text-xs font-bold text-earth-900 min-w-[18px] text-center">{quantity}</span>
+            <span className="px-3 py-2.5 text-xs font-bold text-earth-900 min-w-[28px] text-center">{quantity}</span>
             <button
-              onClick={() => setQuantity(Math.min(product.stockQuantity || 99, quantity + 1))}
-              className="px-2 py-1 text-earth-700 hover:bg-cream-100 font-bold text-xs"
-              title="Increase"
+              onClick={() => handleQuantityChange(quantity + 1)}
+              className="px-3 py-2.5 text-earth-700 hover:bg-cream-100 font-bold text-xs transition-colors"
+              title="Increase quantity"
             >
               +
             </button>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => addToCart(product, quantity)}
-              disabled={!product.inStock}
-              className="bg-cream-50 hover:bg-cream-100 text-earth-900 font-bold px-2.5 py-2 rounded-xl text-xs border border-earth-300 shadow-2xs transition-all disabled:opacity-50"
-              title="Add to cart"
-            >
-              <ShoppingBag className="w-3.5 h-3.5 text-terracotta-600" />
-            </button>
+          {/* Add to Cart Button */}
+          <button
+            onClick={() => addToCart(product, quantity)}
+            disabled={!product.inStock}
+            className="flex-1 bg-cream-50 hover:bg-cream-100 text-earth-900 font-bold py-3 px-3 sm:px-4 rounded-xl text-xs border border-earth-300 shadow-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 hover:border-earth-400 shrink-0"
+          >
+            <ShoppingBag className="w-4 h-4 text-terracotta-600 shrink-0" />
+            <span className="truncate">Add to cart</span>
+          </button>
 
-            <button
-              onClick={() => buyNowDirect(product, quantity)}
-              disabled={!product.inStock}
-              className="bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-warm transition-all disabled:opacity-50"
-            >
-              Buy Now
-            </button>
-          </div>
+          {/* Buy Now Button */}
+          <button
+            onClick={() => buyNowDirect(product, quantity, selectedPack, selectedCapacity)}
+            disabled={!product.inStock}
+            className="flex-1 bg-terracotta-500 hover:bg-terracotta-600 text-white font-bold py-3 px-3 sm:px-4 rounded-xl text-xs shadow-warm transition-all flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50 shrink-0"
+          >
+            <span className="truncate">Buy Now</span>
+          </button>
         </div>
       </div>
 

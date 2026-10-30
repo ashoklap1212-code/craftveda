@@ -98,6 +98,8 @@ export interface Category {
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedPack?: string;
+  selectedCapacity?: string;
 }
 
 export interface ShippingAddress {

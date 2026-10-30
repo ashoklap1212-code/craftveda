@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Product, Category, CartItem, Order, User, Notification, 
   OrderStatus, ShippingAddress, OrderCharges
@@ -118,7 +118,16 @@ interface StoreContextType {
   // Direct Buy Now Purchase Flow
   directPurchaseItem: CartItem | null;
   setDirectPurchaseItem: (item: CartItem | null) => void;
-  buyNowDirect: (product: Product, quantity?: number) => void;
+  buyNowDirect: (product: Product, quantity?: number, selectedPack?: string, selectedCapacity?: string) => void;
+  navigateBackToProductDetail: () => void;
+  lastPurchasedProductId: string | null;
+  setLastPurchasedProductId: (id: string | null) => void;
+  lastPurchasedQuantity: number;
+  lastPurchasedPack: string | null;
+  lastPurchasedCapacity: string | null;
+  setLastPurchasedQuantity: (qty: number) => void;
+  setLastPurchasedPack: (pack: string) => void;
+  setLastPurchasedCapacity: (cap: string) => void;
   selectedShippingAddress: ShippingAddress | null;
   setSelectedShippingAddress: (address: ShippingAddress | null) => void;
   deleteSavedAddress: (index: number) => Promise<void>;
@@ -173,6 +182,40 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : null;
   });
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<ShippingAddress | null>(null);
+
+  // Preserve product selection state (product ID, quantity, pack, capacity) for Buy Now and Back to Shopping flows
+  const [lastPurchasedProductId, setLastPurchasedProductId] = useState<string | null>(() => {
+    return sessionStorage.getItem('craftveda_last_product_id');
+  });
+  const [lastPurchasedQuantity, setLastPurchasedQuantity] = useState<number>(() => {
+    const saved = sessionStorage.getItem('craftveda_last_quantity');
+    return saved ? parseInt(saved, 10) : 1;
+  });
+  const [lastPurchasedPack, setLastPurchasedPack] = useState<string | null>(() => {
+    return sessionStorage.getItem('craftveda_last_pack');
+  });
+  const [lastPurchasedCapacity, setLastPurchasedCapacity] = useState<string | null>(() => {
+    return sessionStorage.getItem('craftveda_last_capacity');
+  });
+
+  useEffect(() => {
+    if (lastPurchasedProductId) sessionStorage.setItem('craftveda_last_product_id', lastPurchasedProductId);
+    else sessionStorage.removeItem('craftveda_last_product_id');
+  }, [lastPurchasedProductId]);
+
+  useEffect(() => {
+    sessionStorage.setItem('craftveda_last_quantity', lastPurchasedQuantity.toString());
+  }, [lastPurchasedQuantity]);
+
+  useEffect(() => {
+    if (lastPurchasedPack) sessionStorage.setItem('craftveda_last_pack', lastPurchasedPack);
+    else sessionStorage.removeItem('craftveda_last_pack');
+  }, [lastPurchasedPack]);
+
+  useEffect(() => {
+    if (lastPurchasedCapacity) sessionStorage.setItem('craftveda_last_capacity', lastPurchasedCapacity);
+    else sessionStorage.removeItem('craftveda_last_capacity');
+  }, [lastPurchasedCapacity]);
 
   // Sync selected address if user has saved addresses and none selected yet
   useEffect(() => {
@@ -252,7 +295,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // UI state
   const [viewRole, setViewRole] = useState<'customer' | 'admin'>('customer');
-  const [activeCustomerPage, setActiveCustomerPage] = useState<CustomerPage>('home');
+  const [activeCustomerPage, setActiveCustomerPageState] = useState<CustomerPage>('home');
   const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>('dashboard');
   const [activeProfileTab, setActiveProfileTab] = useState<ProfileTab>('profile');
 
@@ -328,6 +371,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentCheckoutOrder, setCurrentCheckoutOrder] = useState<Order | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
+  // Browser History Sync (Supports Browser Back & Forward buttons seamlessly)
+  const isPopStateRef = useRef(false);
+
+  useEffect(() => {
+    // Initial history state
+    if (!window.history.state || !window.history.state.page) {
+      window.history.replaceState({ page: activeCustomerPage, productId: selectedProductId }, '');
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.page) {
+        isPopStateRef.current = true;
+        setActiveCustomerPageState(event.state.page);
+        if (event.state.productId) {
+          setSelectedProductId(event.state.productId);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const setActiveCustomerPage = useCallback((page: CustomerPage) => {
+    setActiveCustomerPageState(page);
+    if (!isPopStateRef.current) {
+      window.history.pushState({ page, productId: selectedProductId }, '');
+    }
+    isPopStateRef.current = false;
+  }, [selectedProductId]);
+
   const navigateToWishlist = () => {
     setActiveProfileTab('wishlist');
     setActiveCustomerPage('profile');
@@ -342,7 +416,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Navigation Helpers
   const navigateToProductDetail = (id: string) => {
     setSelectedProductId(id);
-    setActiveCustomerPage('product-detail');
+    setActiveCustomerPageState('product-detail');
+    if (!isPopStateRef.current) {
+      window.history.pushState({ page: 'product-detail', productId: id }, '');
+    }
+    isPopStateRef.current = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const navigateBackToProductDetail = () => {
+    const targetId = directPurchaseItem?.product.id || lastPurchasedProductId || selectedProductId;
+    if (targetId) {
+      setSelectedProductId(targetId);
+      setActiveCustomerPageState('product-detail');
+      if (!isPopStateRef.current) {
+        window.history.pushState({ page: 'product-detail', productId: targetId }, '');
+      }
+    } else {
+      setActiveCustomerPageState('shop');
+      if (!isPopStateRef.current) {
+        window.history.pushState({ page: 'shop' }, '');
+      }
+    }
+    isPopStateRef.current = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -467,16 +563,36 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Direct Buy Now method
-  const buyNowDirect = (product: Product, quantity = 1) => {
+  const buyNowDirect = (product: Product, quantity = 1, selectedPack?: string, selectedCapacity?: string) => {
     if (!product.inStock || product.stockQuantity < 1) {
       showToast(`${product.name} is out of stock`, 'error');
       return;
     }
     const finalQty = Math.max(1, Math.min(quantity, product.stockQuantity));
-    setDirectPurchaseItem({ product, quantity: finalQty });
+    const pack = selectedPack || product.packOf || '1';
+    const capacity = selectedCapacity || product.capacity || '1000 ml';
+
+    setSelectedProductId(product.id);
+    const item: CartItem = { 
+      product, 
+      quantity: finalQty,
+      selectedPack: pack,
+      selectedCapacity: capacity
+    };
+    setDirectPurchaseItem(item);
+    sessionStorage.setItem('craftveda_direct_purchase', JSON.stringify(item));
+
+    setLastPurchasedProductId(product.id);
+    setLastPurchasedQuantity(finalQty);
+    setLastPurchasedPack(pack);
+    setLastPurchasedCapacity(capacity);
 
     // Navigate straight to Checkout & Order without touching cart
-    setActiveCustomerPage('checkout');
+    setActiveCustomerPageState('checkout');
+    if (!isPopStateRef.current) {
+      window.history.pushState({ page: 'checkout', productId: product.id }, '');
+    }
+    isPopStateRef.current = false;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -891,6 +1007,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         directPurchaseItem,
         setDirectPurchaseItem,
         buyNowDirect,
+        navigateBackToProductDetail,
+        lastPurchasedProductId,
+        setLastPurchasedProductId,
+        lastPurchasedQuantity,
+        lastPurchasedPack,
+        lastPurchasedCapacity,
+        setLastPurchasedQuantity,
+        setLastPurchasedPack,
+        setLastPurchasedCapacity,
         selectedShippingAddress,
         setSelectedShippingAddress,
         deleteSavedAddress,
