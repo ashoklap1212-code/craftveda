@@ -129,7 +129,8 @@ router.post('/send-otp', async (req, res) => {
     }
 
     // Send email with OTP via Nodemailer (or dev console fallback if SMTP unconfigured)
-    await sendOtpEmail(cleanEmail, rawOtp);
+    const existingUser = await User.findOne({ email: cleanEmail }).select('name');
+    await sendOtpEmail(cleanEmail, rawOtp, existingUser?.name || '', 5);
 
     // Never return OTP code in response
     res.json({
@@ -185,7 +186,8 @@ router.post('/resend-otp', async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendOtpEmail(cleanEmail, rawOtp);
+    const existingUser = await User.findOne({ email: cleanEmail }).select('name');
+    await sendOtpEmail(cleanEmail, rawOtp, existingUser?.name || '', 5);
 
     res.json({
       message: `Resent verification code to ${cleanEmail}`,

@@ -288,6 +288,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // User not logged in or session expired
         setCurrentUser(null);
       }
+
+      // Check ?order= query param in URL (e.g. from Order confirmation & status emails)
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderParam = urlParams.get('order');
+        if (orderParam) {
+          setSelectedOrderId(orderParam);
+          setActiveCustomerPageState('track-order');
+        }
+      } catch (err) {}
     }
 
     loadInitialData();

@@ -3,6 +3,7 @@ import { Order } from '../models/Order.js';
 import { Product } from '../models/Product.js';
 import { Notification } from '../models/Notification.js';
 import { protect, adminOrSeller, optionalAuth } from '../middleware/authMiddleware.js';
+import { sendOrderConfirmationEmail, sendOrderStatusEmail } from '../utils/sendEmail.js';
 
 const router = express.Router();
 
@@ -101,6 +102,12 @@ router.post('/', protect, async (req, res) => {
       message: `Your order #${createdOrder.orderNumber} has been confirmed. Total: ₹${createdOrder.totalAmount.toLocaleString('en-IN')}`,
     }).catch(err => console.error('Failed to create order notification:', err.message));
 
+    // Send Premium Order Confirmation Email automatically to customer
+    // Handled safely without affecting the order creation if email service fails
+    sendOrderConfirmationEmail(createdOrder).catch(err => {
+      console.error(`❌ Order confirmation email dispatch failed for #${createdOrder.orderNumber}:`, err.message);
+    });
+
     res.status(201).json(createdOrder);
   } catch (error) {
     console.error('❌ Error creating order:', error);
@@ -176,6 +183,9 @@ router.put('/:id/status', protect, adminOrSeller, async (req, res) => {
       return res.status(400).json({ message: 'Please provide status' });
     }
 
+    const previousStatus = order.currentStatus;
+    const isStatusChanged = previousStatus !== status;
+
     const nowStr = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
     const standardSequence = [
       'Order Placed',
@@ -231,14 +241,25 @@ router.put('/:id/status', protect, adminOrSeller, async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // Notify customer about status update in MongoDB
-    if (order.userId) {
-      await Notification.create({
-        userId: order.userId,
-        type: 'order',
-        title: `Order Status: ${status}`,
-        message: `Your order #${order.orderNumber} status is now: ${status}.`,
-      }).catch(err => console.error('Failed to send status update notification:', err.message));
+    // Only notify customer if the status was actually changed
+    // Prevents redundant notifications and duplicate emails when admin re-saves identical status
+    if (isStatusChanged) {
+      if (order.userId) {
+        await Notification.create({
+          userId: order.userId,
+          type: 'order',
+          title: `Order Status: ${status}`,
+          message: `Your order #${order.orderNumber} status is now: ${status}.`,
+        }).catch(err => console.error('Failed to send status update notification:', err.message));
+      }
+
+      // Automatically dispatch premium email notification for status update
+      // Delivery failures are caught safely without impacting the HTTP status response
+      sendOrderStatusEmail(updatedOrder, previousStatus, notes).catch(err => {
+        console.error(`❌ Automatic status email dispatch failed for #${updatedOrder.orderNumber}:`, err.message);
+      });
+    } else {
+      console.log(`ℹ️ Status unchanged for Order #${updatedOrder.orderNumber} ("${status}"). Skipped status update email.`);
     }
 
     res.json(updatedOrder);

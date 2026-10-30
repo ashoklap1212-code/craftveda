@@ -9,7 +9,7 @@ export const OrderTrackingView: React.FC = () => {
   const { orders, selectedOrderId, setSelectedOrderId, setActiveCustomerPage } = useStore();
   const [searchInput, setSearchInput] = useState('');
 
-  const activeOrder = orders.find(o => o.id === selectedOrderId || o.orderNumber === searchInput.trim()) || orders[0];
+  const activeOrder = orders.find(o => o.id === selectedOrderId || o.orderNumber === selectedOrderId || (searchInput.trim() && o.orderNumber.toLowerCase() === searchInput.trim().toLowerCase())) || orders[0];
 
   const handleSearchOrder = (e: React.FormEvent) => {
     e.preventDefault();

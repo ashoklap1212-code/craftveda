@@ -1,7 +1,12 @@
 import nodemailer from 'nodemailer';
+import {
+  renderOtpEmailTemplate,
+  renderOrderConfirmationTemplate,
+  renderOrderStatusUpdateTemplate,
+} from './emailTemplates.js';
 
 /**
- * Helper to get configured Transporter or null if SMTP credentials missing
+ * Helper to get configured Transporter or null if SMTP credentials missing.
  * Reads configuration strictly from backend .env
  */
 const getTransporter = () => {
@@ -23,24 +28,52 @@ const getTransporter = () => {
 };
 
 /**
- * Sends a 6-digit OTP email to the user.
- * Subject: CraftVeda verification code
+ * Returns frontend base URL for email link generation
+ */
+const getClientUrl = () => {
+  return (
+    process.env.CLIENT_URL ||
+    process.env.FRONTEND_URL ||
+    'http://localhost:5173'
+  ).replace(/\/$/, '');
+};
+
+/**
+ * 1. PREMIUM EMAIL OTP VERIFICATION
+ * Sends a premium-designed 6-digit OTP email to the user.
  * 
  * @param {string} email User email address
  * @param {string} otp 6-digit OTP code
  * @param {string} [name] User display name
+ * @param {number} [expirationMinutes] Expiration period in minutes (default: 5)
  */
-export const sendOtpEmail = async (email, otp, name = '') => {
+export const sendOtpEmail = async (email, otp, name = '', expirationMinutes = 5) => {
   const transporter = getTransporter();
-  const cleanEmail = email.toLowerCase().trim();
+  const cleanEmail = (email || '').toLowerCase().trim();
+  const clientUrl = getClientUrl();
+
+  if (!cleanEmail) {
+    console.warn('⚠️ OTP Email skipped: no recipient email provided');
+    return { success: false, error: 'Recipient email is missing' };
+  }
+
+  const htmlContent = renderOtpEmailTemplate({
+    otp,
+    expirationMinutes,
+    email: cleanEmail,
+    name,
+    clientUrl,
+  });
+
+  const subject = `CraftVeda Verification Code: ${otp}`;
 
   if (!transporter) {
     if (process.env.NODE_ENV !== 'production') {
       console.log('\n==================================================');
-      console.log('✉️  [CraftVeda Dev Fallback - Email OTP Dispatch]');
+      console.log('✉️  [CraftVeda Dev Fallback - Premium OTP Email]');
       console.log(`To Email : ${cleanEmail}`);
       console.log(`OTP Code : ${otp}`);
-      console.log(`Expires  : In 5 minutes`);
+      console.log(`Expires  : In ${expirationMinutes} minutes`);
       console.log('==================================================\n');
       return { success: true, mode: 'dev-console' };
     } else {
@@ -51,41 +84,169 @@ export const sendOtpEmail = async (email, otp, name = '') => {
 
   try {
     const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER;
-    const recipientGreeting = name && name.trim() ? name.trim() : 'CraftVeda Member';
+    const fromName = process.env.EMAIL_FROM_NAME || 'CraftVeda Support';
 
-    const htmlContent = `
-      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 20px; background-color: #fdfbf7;">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <div style="font-size: 40px; margin-bottom: 8px;">🏺</div>
-          <h2 style="color: #4a2e1b; font-family: Georgia, serif; margin: 0; font-size: 24px;">CraftVeda</h2>
-          <p style="color: #78350f; font-size: 11px; margin-top: 4px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Authentic Indian Handicrafts</p>
-        </div>
-        <hr style="border: 0; border-top: 1px solid #f3ebd8; margin: 20px 0;" />
-        <p style="color: #374151; font-size: 14px; line-height: 1.5; margin-bottom: 12px;">Hello ${recipientGreeting},</p>
-        <p style="color: #374151; font-size: 14px; line-height: 1.5;">Your verification code for logging into <strong>CraftVeda</strong> is:</p>
-        <div style="text-align: center; margin: 28px 0;">
-          <span style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #c2410c; background-color: #fff7ed; padding: 14px 28px; border-radius: 14px; border: 1px dashed #fdba74; display: inline-block;">
-            ${otp}
-          </span>
-        </div>
-        <p style="color: #4b5563; font-size: 13px; text-align: center; font-weight: 600;">This code is valid for <strong>5 minutes</strong>.</p>
-        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 6px;">For your security, never share this verification code with anyone.</p>
-        <hr style="border: 0; border-top: 1px solid #f3ebd8; margin: 24px 0 16px 0;" />
-        <p style="color: #9ca3af; font-size: 11px; text-align: center; margin: 0;">If you did not request this verification code, please ignore this message.</p>
-      </div>
-    `;
-
-    await transporter.sendMail({
-      from: `"${process.env.EMAIL_FROM_NAME || 'CraftVeda Support'}" <${fromAddress}>`,
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromAddress}>`,
       to: cleanEmail,
-      subject: `CraftVeda verification code`,
+      subject,
       html: htmlContent,
     });
 
-    console.log(`📧 OTP email sent successfully to ${cleanEmail}`);
-    return { success: true, mode: 'smtp' };
+    console.log(`📧 Premium OTP email sent successfully to ${cleanEmail} (ID: ${info.messageId})`);
+    return { success: true, mode: 'smtp', messageId: info.messageId };
   } catch (error) {
-    console.error(`❌ OTP email failed: ${error.message}`);
+    console.error(`❌ OTP email delivery failed to ${cleanEmail}: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * 2. PREMIUM ORDER CONFIRMATION EMAIL
+ * Triggered automatically whenever a customer successfully places an order.
+ * 
+ * @param {object} order Complete saved Order document
+ */
+export const sendOrderConfirmationEmail = async (order) => {
+  if (!order) {
+    console.warn('⚠️ Order confirmation email skipped: missing order document');
+    return { success: false, error: 'Missing order document' };
+  }
+
+  const recipientEmail = (
+    order.customerEmail ||
+    order.shippingAddress?.email ||
+    ''
+  ).toLowerCase().trim();
+
+  if (!recipientEmail) {
+    console.warn(`⚠️ Order confirmation email skipped for order #${order.orderNumber}: No email found`);
+    return { success: false, error: 'Customer email missing on order' };
+  }
+
+  const transporter = getTransporter();
+  const clientUrl = getClientUrl();
+  const orderNumber = order.orderNumber || 'CV-ORDER';
+
+  const htmlContent = renderOrderConfirmationTemplate({
+    order,
+    clientUrl,
+  });
+
+  const subject = `Order Confirmed — Order #${orderNumber}`;
+
+  if (!transporter) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n==================================================');
+      console.log('✉️  [CraftVeda Dev Fallback - Order Confirmation Email]');
+      console.log(`To Email     : ${recipientEmail}`);
+      console.log(`Order Number : ${orderNumber}`);
+      console.log(`Total Paid   : ₹${order.totalAmount}`);
+      console.log(`Items Count  : ${order.items?.length || 0}`);
+      console.log('==================================================\n');
+      return { success: true, mode: 'dev-console' };
+    } else {
+      console.error(`❌ Order confirmation email failed: SMTP credentials not configured`);
+      return { success: false, error: 'SMTP credentials not configured' };
+    }
+  }
+
+  try {
+    const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+    const fromName = process.env.EMAIL_FROM_NAME || 'CraftVeda Support';
+
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromAddress}>`,
+      to: recipientEmail,
+      subject,
+      html: htmlContent,
+    });
+
+    console.log(`📧 Order Confirmation email sent successfully to ${recipientEmail} for Order #${orderNumber} (ID: ${info.messageId})`);
+    return { success: true, mode: 'smtp', messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Order confirmation email delivery failed for Order #${orderNumber}: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * 3. AUTOMATIC ORDER STATUS UPDATE EMAIL
+ * Triggered automatically whenever an admin changes an order's status.
+ * 
+ * @param {object} order Complete saved Order document
+ * @param {string} previousStatus The status before update
+ * @param {string} [notes] Optional admin notes / tracking reference
+ */
+export const sendOrderStatusEmail = async (order, previousStatus = '', notes = '') => {
+  if (!order) {
+    console.warn('⚠️ Order status email skipped: missing order document');
+    return { success: false, error: 'Missing order document' };
+  }
+
+  const recipientEmail = (
+    order.customerEmail ||
+    order.shippingAddress?.email ||
+    ''
+  ).toLowerCase().trim();
+
+  if (!recipientEmail) {
+    console.warn(`⚠️ Order status email skipped for order #${order.orderNumber}: No email found`);
+    return { success: false, error: 'Customer email missing on order' };
+  }
+
+  const newStatus = order.currentStatus;
+  const orderNumber = order.orderNumber || 'CV-ORDER';
+
+  // Do not send if status hasn't actually changed
+  if (previousStatus && previousStatus === newStatus) {
+    console.log(`ℹ️ Status notification email skipped for Order #${orderNumber}: Status unchanged ("${newStatus}")`);
+    return { success: true, skipped: true, reason: 'Status unchanged' };
+  }
+
+  const transporter = getTransporter();
+  const clientUrl = getClientUrl();
+
+  const { subject, html } = renderOrderStatusUpdateTemplate({
+    order,
+    previousStatus,
+    newStatus,
+    notes,
+    clientUrl,
+  });
+
+  if (!transporter) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n==================================================');
+      console.log('✉️  [CraftVeda Dev Fallback - Order Status Update Email]');
+      console.log(`To Email        : ${recipientEmail}`);
+      console.log(`Order Number    : ${orderNumber}`);
+      console.log(`Previous Status : ${previousStatus}`);
+      console.log(`New Status      : ${newStatus}`);
+      console.log(`Subject         : ${subject}`);
+      console.log('==================================================\n');
+      return { success: true, mode: 'dev-console' };
+    } else {
+      console.error(`❌ Order status email failed: SMTP credentials not configured`);
+      return { success: false, error: 'SMTP credentials not configured' };
+    }
+  }
+
+  try {
+    const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+    const fromName = process.env.EMAIL_FROM_NAME || 'CraftVeda Support';
+
+    const info = await transporter.sendMail({
+      from: `"${fromName}" <${fromAddress}>`,
+      to: recipientEmail,
+      subject,
+      html,
+    });
+
+    console.log(`📧 Order Status Update email ("${newStatus}") sent successfully to ${recipientEmail} for Order #${orderNumber} (ID: ${info.messageId})`);
+    return { success: true, mode: 'smtp', messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Order status update email failed for Order #${orderNumber}: ${error.message}`);
     return { success: false, error: error.message };
   }
 };
@@ -106,7 +267,7 @@ export const sendLoginSuccessEmail = async (
   dateTime = null
 ) => {
   const transporter = getTransporter();
-  const cleanEmail = email.toLowerCase().trim();
+  const cleanEmail = (email || '').toLowerCase().trim();
   const dateTimeStr = dateTime || new Date().toLocaleString('en-IN', {
     dateStyle: 'full',
     timeStyle: 'short',
@@ -133,6 +294,8 @@ export const sendLoginSuccessEmail = async (
 
   try {
     const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+    const fromName = process.env.EMAIL_FROM_NAME || 'CraftVeda Support';
+
     const htmlContent = `
       <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 20px; background-color: #fdfbf7;">
         <div style="text-align: center; margin-bottom: 24px;">
@@ -154,7 +317,7 @@ export const sendLoginSuccessEmail = async (
     `;
 
     await transporter.sendMail({
-      from: `"${process.env.EMAIL_FROM_NAME || 'CraftVeda Support'}" <${fromAddress}>`,
+      from: `"${fromName}" <${fromAddress}>`,
       to: cleanEmail,
       subject: `CraftVeda login successful`,
       html: htmlContent,

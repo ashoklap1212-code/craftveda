@@ -64,9 +64,7 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
         {/* Super-compact announcement for very small screens */}
-        <div className="xs:hidden bg-earth-800 text-cream-200 px-3 py-1 text-[10px] text-center">
-          Free shipping above ₹1,499 🚚
-        </div>
+       
 
         {/* Main Header */}
         <div className="container mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2">
